@@ -1,11 +1,9 @@
 unit resources;
 
 interface
-   uses Globals;
+   uses Globals, Enums;
 
 Type
-   TResourceType = (RSRC_CRYSTAL, RSRC_METAL, RSRC_WOOD);
-   
    PResource = ^TResource;
    TResource = record
       C : Double;
@@ -16,7 +14,7 @@ Type
 
 Var
    Resource : Array of PResource;
-   ResourceNum : uInt;
+   ResourceNum, ResourceLen : uInt;
 
 implementation
 

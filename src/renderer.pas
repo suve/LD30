@@ -11,7 +11,8 @@ implementation
    uses
       SysUtils,
       SDL, Sour, GL,
-      Globals, Resources, Creatures;
+      Globals, Enums,
+      Resources, Buildings, Creatures;
 
 
 Procedure DrawPlanets();
@@ -93,7 +94,7 @@ Procedure DrawResources();
       If (ResourceNum <= 0) then Exit;
       
       glBegin(GL_LINES);
-      For R := 0 to (ResourceNum - 1) do begin
+      For R := 0 to (ResourceLen - 1) do begin
          If (Resource[R] = NIL) then Continue;
          
          CH_to_XYA(Resource[R]^.C,0,@ResPt,@ResAng);
@@ -107,15 +108,37 @@ Procedure DrawResources();
    end;
 
 
+Procedure DrawBuildings();
+   const SIZE = 12;
+   Var B:uInt; buPt : TPoint; buAn : Double;
+   begin
+      If (BuildingNum <= 0) then Exit;
+      
+      glBegin(GL_QUADS);
+      glColor4ub(255,127,63,255);
+      For B:=0 to (BuildingLen - 1) do begin
+         If (Building[B] = NIL) then Continue;
+         
+         CH_to_XYA(Building[B]^.C, 0, @buPt, @buAn);
+         
+         glVertex2f(buPt.X - SIZE * Cos(buAn + 1*Pi/4), buPt.Y - SIZE * Sin(buAn + 1*Pi/4));
+         glVertex2f(buPt.X - SIZE * Cos(buAn + 3*Pi/4), buPt.Y - SIZE * Sin(buAn + 3*Pi/4));
+         glVertex2f(buPt.X - SIZE * Cos(buAn + 5*Pi/4), buPt.Y - SIZE * Sin(buAn + 5*Pi/4));
+         glVertex2f(buPt.X - SIZE * Cos(buAn + 7*Pi/4), buPt.Y - SIZE * Sin(buAn + 7*Pi/4));
+      end;
+      glEnd();
+   end;
+
+
 Procedure DrawCreatures();
    const SIZE = 12;
    Var C:uInt; crPt : TPoint; crAn : Double;
    begin
-      If (CreatureNum = 0) then Exit;
+      If (CreatureNum <= 0) then Exit;
       
       glBegin(GL_QUADS);
       glColor4ub(255,0,0,255);
-      For C:=0 to (CreatureNum - 1) do begin
+      For C:=0 to (CreatureLen - 1) do begin
          If (Creature[C] = NIL) then Continue;
          
          CH_to_XYA(Creature[C]^.C, 0, @crPt, @crAn);
@@ -220,6 +243,8 @@ Procedure DrawFrame();
       
       DrawPlanets();
       DrawResources();
+      
+      DrawBuildings();
       DrawCreatures();
       
       Sour.SetVisibleArea(0, 0, Screen^.W, Screen^.H);

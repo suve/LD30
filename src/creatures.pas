@@ -3,27 +3,17 @@ unit creatures;
 {$INCLUDE defines.inc}
 
 interface
-   uses Globals;
+   uses Enums;
 
 Type
-   TCreatureLook = (CRLO_MAN);
-   TCreatureOrder = (
-      CROR_PATROL, CROR_STAND, CROR_WALK,
-      CROR_ATT_WALK, CROR_ATT_UNIT, CROR_ATT_BLDG,
-      CROR_COL_CRYS, CROR_COL_TIMB, CROR_COL_META,
-      CROR_MAX
-      );
-   
    PCreature = ^TCreature;
    TCreature = object
       C, H : Double;
       
       HP, MaxHP : Double;
-      
       Speed : Double;
-      XVel, YVel : Double;
       
-      Look : uInt;
+      Typ : TCreatureType;
       Team : uInt;
       
       IntoCrystal, IntoMetal, IntoWood : Boolean;
@@ -43,9 +33,10 @@ Type
 
 Var
    Creature : Array of PCreature;
-   CreatureNum : uInt;
+   CreatureNum, CreatureLen : uInt;
 
 implementation
+   uses Globals;
 
 Constructor TCreature.Create();
    begin
@@ -58,7 +49,7 @@ Destructor TCreature.Destroy();
    end;
 
 Procedure TCreature.Calculate();
-   Var distMin, distPlu : Double; WalkDir : sInt;
+   Var distMin, distPlu : Double;
    begin
       Case (Self.Order) of
          

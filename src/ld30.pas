@@ -4,11 +4,13 @@ program ld30;
 {$IFDEF WINDOWS} {$APPTYPE GUI} {$ENDIF}
 
 uses
-   SysUtils, SDL, SDL_Image, SDL_Mixer, Sour, GL,
-   Globals, Resources, Creatures, Renderer;
-
-Var
-   Traveller : Double;
+   SysUtils,
+   SDL, SDL_Image, SDL_Mixer,
+   Sour, GL,
+   Globals, Enums,
+   Resources,
+   Buildings, Creatures,
+   Renderer;
 
 Procedure AdvanceTime();
    begin
@@ -115,12 +117,24 @@ Procedure MoveCamera();
    end;
 
 
+Procedure CalculateBuildings();
+   Var C:uInt;
+   begin
+      If (BuildingNum = 0) then Exit();
+      For C:=0 to (BuildingLen - 1) do begin
+         If (Building[C] = NIL) then Continue;
+         
+         Building[C]^.Calculate()
+      end;
+   end;
+
+
 Procedure CalculateCreatures();
    Var C:uInt;
    begin
       If (CreatureNum = 0) then Exit();
-      For C:=0 to (CreatureNum - 1) do begin
-         If (Creature[C] = NIL) then Exit();
+      For C:=0 to (CreatureLen - 1) do begin
+         If (Creature[C] = NIL) then Continue;
          
          Creature[C]^.Calculate()
       end;
@@ -177,10 +191,11 @@ begin // MAIN
    end;
    
    CalcPlanetZones();
-   Traveller := 0;
    
-   SetLength(Resource, 20);
-   For ResourceNum := 0 to 19 do begin
+   Write('Resources ');
+   ResourceLen := 20;
+   SetLength(Resource, ResourceLen);
+   For ResourceNum := 0 to (ResourceLen-1) do begin
       New(Resource[ResourceNum]);
       
       Resource[ResourceNum]^.Typ := TResourceType(Random(3));
@@ -188,10 +203,13 @@ begin // MAIN
       
       Resource[ResourceNum]^.C := Random() * Planet[1].Cmax
    end;
-   ResourceNum += 1;
+   ResourceNum := ResourceLen;
+   Writeln('done.');
    
-   SetLength(Creature, 5);
-   For CreatureNum := 0 to 4 do begin
+   Write('Creatures ');
+   CreatureLen := 5;
+   SetLength(Creature, CreatureLen);
+   For CreatureNum := 0 to (CreatureLen-1) do begin
       New(Creature[CreatureNum],Create());
       
       Creature[CreatureNum]^.C := Random() * Planet[1].Cmax;
@@ -200,19 +218,20 @@ begin // MAIN
       Creature[CreatureNum]^.Order := CROR_WALK;
       Creature[CreatureNum]^.OrderTarget := Trunc(Random() * Planet[1].Cmax);
    end;
-   CreatureNum += 1;
+   CreatureNum := CreatureLen;
+   Writeln('done.');
+   
+   BuildingLen := 0;
+   BuildingNum := 0;
    
    Repeat
       
       AdvanceTime();
       
-      Traveller += dT * 3690;
-      If (Traveller > Planet[1].Cmax)
-         then Traveller -= Planet[1].Cmax;
-      
       ProcessEvents();
       MoveCamera();
       
+      CalculateBuildings();
       CalculateCreatures();
       
       DrawFrame();

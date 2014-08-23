@@ -3,7 +3,10 @@ unit globals;
 {$INCLUDE defines.inc}
 
 interface
-   uses SDL, Sour;
+   uses
+      SDL, Sour, Enums,
+      Buildings, Creatures
+      ;
 
 Const
    GAME_NAME = 'TechnoTumor';
@@ -15,25 +18,8 @@ Const
    SDL_TICKS_PER_SECOND = 1000;
    PLANET_GRANULARITY = 10;
    CAMERA_SPEED = 500;
-
-Type
-   sInt = System.NativeInt;
-   uInt = System.NativeUInt;
-
-Type
-   PDir = ^TDir;
-   TDir = (DIR_UP, DIR_RIGHT, DIR_DOWN, DIR_LEFT);
    
-   TUISprite = (UIS_CRYSTALS, UIS_METAL, UIS_TIMBER);
-
-Const
-   DIR_RI = DIR_RIGHT;
-   DIR_DO = DIR_DOWN;
-   DIR_LE = DIR_LEFT;
-   
-   SDLK_RI = SDLK_RIGHT;
-   SDLK_DO = SDLK_DOWN;
-   SDLK_LE = SDLK_LEFT;
+   ARRAY_RESIZE_STEP = 8;
 
 Type
    PPoint = ^TPoint;
@@ -65,10 +51,6 @@ Var
    FrameStr : AnsiString = 'FPS: ???';
    
    Planet : Array[0..1] of TPlanet;
-   
-   ptA, ptB, ptC : TPoint; 
-   ptCAngle : Double;
-   
    mX, mY : sInt;
    
    Camera : TPoint = (X:0.0; Y:0.0);
@@ -77,11 +59,17 @@ Var
    CamScale : sInt = 10;
    CamScaleFactor : Double = 1;
 
+   SelType : TSelectionType;
+   SelID : Array of uInt;
+
 Procedure CalcPlanetZones();
 
 Procedure CH_to_XYA(Const C,H:Double;Const Point:PPoint;Const Angle:PDouble);
 Procedure CH_to_XY(Const C,H:Double;Const Point:PPoint);
 Function CH_to_XY(Const C,H:Double):TPoint;
+
+
+Procedure FinishProduction(Const Build:PBuilding);
 
 
 
@@ -111,7 +99,7 @@ Procedure CalcPlanetZones();
       
       ptCos, ptSin, ptAngle : Double;
       
-      //PtA, PtB : TPoint;
+      ptA, ptB : TPoint;
    begin
       // Calculate X and Y difference between planets
       ctrCos := Planet[1].X - Planet[0].X;
@@ -128,10 +116,6 @@ Procedure CalcPlanetZones();
       ctrD[0] := Sqr(ctrDist) - Sqr(Planet[1].R) + Sqr(Planet[0].R); 
       ctrD[1] := Sqr(ctrDist) - Sqr(Planet[0].R) + Sqr(Planet[1].R); 
       ctrD[0] /= 2 * ctrDist; ctrD[1] /= 2 * ctrDist;
-      
-      ptC.X := Planet[0].X + Cos(ctrAngle) * ctrD[0];
-      ptC.Y := Planet[0].Y + Sin(ctrAngle) * ctrD[0];
-      ptCAngle := ctrAngle;
       
       ptCos := ctrD[0] / Planet[0].R;
       ptSin := Sqrt(1 - Sqr(ptCos));
@@ -194,5 +178,48 @@ Function CH_to_XY(Const C,H:Double):TPoint;
    begin
       CH_to_XY(C,H,@Result)
    end;
+
+
+Procedure InsertCreature(Const Crea:PCreature);
+   Var Idx:uInt;
+   begin
+      If (CreatureNum < CreatureLen) then begin
+         Idx := 0;
+         While (Creature[Idx] <> NIL) do Idx += 1
+      end else begin
+         Idx := CreatureLen;
+         CreatureLen += ARRAY_RESIZE_STEP;
+         SetLength(Creature, CreatureLen)
+      end;
+      
+      Creature[Idx] := Crea;
+      CreatureNum += 1
+   end;
+
+
+Procedure FinishProduction(Const Build:PBuilding);
+   Var Crea:PCreature;
+   begin
+      New(Crea,Create());
+      
+      Crea^.C := Build^.C;
+      Crea^.H := Build^.H;
+      
+      Crea^.HP := 100;
+      Crea^.MaxHP := 100;
+      
+      Crea^.Speed := 300 + Random() * 150;
+      
+      Crea^.Typ := Build^.Production.crType;
+      Crea^.Team := Build^.Team;
+      
+      Crea^.Order := CROR_PATROL;
+      
+      InsertCreature(Crea);
+      
+      Build^.Production.Active := False;
+      Build^.Production.Progress := 0.0
+   end;
+
 
 end.
