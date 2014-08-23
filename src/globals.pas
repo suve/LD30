@@ -3,14 +3,14 @@ unit globals;
 {$INCLUDE defines.inc}
 
 interface
-   uses SDL;
+   uses SDL, Sour;
 
 Const
-   GAME_NAME = 'LD30';
+   GAME_NAME = 'TechnoTumor';
    GAME_VMAJOR = 0;
-   GAME_VMINOR = 1;
+   GAME_VMINOR = 2;
    GAME_VBUGFX = 0;
-   GAME_VERSION = Chr(GAME_VMAJOR) + '.' + Chr(GAME_VMINOR) + '.' + Chr(GAME_VBUGFX);
+   GAME_VERSION = Chr(48+GAME_VMAJOR) + '.' + Chr(48+GAME_VMINOR) + '.' + Chr(48+GAME_VBUGFX);
 
    SDL_TICKS_PER_SECOND = 1000;
    PLANET_GRANULARITY = 10;
@@ -23,6 +23,8 @@ Type
 Type
    PDir = ^TDir;
    TDir = (DIR_UP, DIR_RIGHT, DIR_DOWN, DIR_LEFT);
+   
+   TUISprite = (UIS_CRYSTALS, UIS_METAL, UIS_TIMBER);
 
 Const
    DIR_RI = DIR_RIGHT;
@@ -51,11 +53,16 @@ Var
    Terminate : Boolean = FALSE;
    Ev : TSDL_Event;
    
+   FontA : Sour.PFont;
+   TechnoUI, TribalUI : Array[TUISprite] of Sour.PImage;
+   Icon : PSDL_Surface;
+   
    Ticks, Time : uInt;
    dT : Double;
    
    Frames : uInt = 0;
    FrameTime : uInt = 0;
+   FrameStr : AnsiString = 'FPS: ???';
    
    Planet : Array[0..1] of TPlanet;
    
@@ -72,6 +79,7 @@ Var
 
 Procedure CalcPlanetZones();
 
+Procedure CH_to_XYA(Const C,H:Double;Const Point:PPoint;Const Angle:PDouble);
 Procedure CH_to_XY(Const C,H:Double;Const Point:PPoint);
 Function CH_to_XY(Const C,H:Double):TPoint;
 
@@ -159,19 +167,27 @@ Procedure CalcPlanetZones();
       Writeln('Planet[1]: ',Trunc(Planet[1].Cmin):5,' - ',Trunc(Planet[1].Cmax):5,'; delta: ',Trunc(Planet[1].AngDelta*180/Pi));
    end;
 
-Procedure CH_to_XY(Const C,H:Double;Const Point:PPoint);
-   Var Angle : Double; pl : sInt;
+Procedure CH_to_XYA(Const C,H:Double;Const Point:PPoint;Const Angle:PDouble);
+   Var pl : sInt;
    begin
       If (C <= Planet[0].Cmax) then begin
-         Angle := C / Planet[0].Circu;
+         Angle^ := C / Planet[0].Circu;
          pl := 0;
       end else begin
-         Angle := (C - Planet[1].Cmin) / Planet[1].Circu;
+         Angle^ := (C - Planet[1].Cmin) / Planet[1].Circu;
          pl := 1;
       end;
-      Angle *= 2 * Pi;
-      Point^.X := Planet[pl].X + Cos(Planet[pl].AngDelta + Angle) * Planet[pl].R;
-      Point^.Y := Planet[pl].Y + Sin(Planet[pl].AngDelta + Angle) * Planet[pl].R;
+      Angle^ *= 2 * Pi;
+      Angle^ := Planet[pl].AngDelta + Angle^;
+      
+      Point^.X := Planet[pl].X + Cos(Angle^) * Planet[pl].R;
+      Point^.Y := Planet[pl].Y + Sin(Angle^) * Planet[pl].R;
+   end;
+
+Procedure CH_to_XY(Const C,H:Double;Const Point:PPoint);
+   Var Angle:Double;
+   begin
+      CH_to_XYA(C,H,Point,@Angle)
    end;
 
 Function CH_to_XY(Const C,H:Double):TPoint;

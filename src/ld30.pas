@@ -1,10 +1,11 @@
 program ld30;
 
 {$INCLUDE defines.inc}
+{$IFDEF WINDOWS} {$APPTYPE GUI} {$ENDIF}
 
 uses
    SysUtils, SDL, SDL_Image, SDL_Mixer, Sour, GL,
-   Globals;
+   Globals, Resources, Creatures, Renderer;
 
 Var
    Traveller : Double;
@@ -111,81 +112,20 @@ Procedure MoveCamera();
       
       Camera.X += XMove * CamScaleFactor * CAMERA_SPEED * dT;
       Camera.Y += YMove * CamScaleFactor * CAMERA_SPEED * dT;
-      
-      Sour.SetVisibleArea(
-         Trunc(Camera.X), Trunc(Camera.Y),
-         Trunc(800 * CamScaleFactor), Trunc(600 * CamScaleFactor)
-      )
    end;
 
-Procedure DrawFrame();
-   Var Pl, Points, Pt : sInt;
-       Angle, Circumference : Double;
-       Trav : TPoint;
+
+Procedure CalculateCreatures();
+   Var C:uInt;
    begin
-   Sour.BeginFrame();
-      
-      Sour.TexDisable();
-      For Pl := 0 to 1 do begin
-         Circumference := Planet[Pl].R * 2 * Pi;
-         Points := Trunc(Circumference / PLANET_GRANULARITY);
+      If (CreatureNum = 0) then Exit();
+      For C:=0 to (CreatureNum - 1) do begin
+         If (Creature[C] = NIL) then Exit();
          
-         glBegin(GL_LINE_LOOP);
-            glColor4ub(255,255,255,255);
-            For Pt := 0 to (Points-1) do begin
-               Angle := 2 * Pi * Pt / Points;
-               glVertex2f(
-                  Planet[Pl].X + Cos(Angle)*Planet[Pl].R,
-                  Planet[Pl].Y + Sin(Angle)*Planet[Pl].R
-               );
-            end;
-         glEnd();
+         Creature[C]^.Calculate()
       end;
-      
-      glBegin(GL_LINES);
-         glColor4ub(255,0,0,255);
-         
-         glVertex2f(Planet[0].X,Planet[0].Y);
-         glVertex2f(ptA.X,ptA.Y);
-         
-         glVertex2f(Planet[1].X,Planet[1].Y);
-         glVertex2f(ptA.X,ptA.Y);
-         
-         glColor4ub(255,255,0,255);
-         glVertex2f(Planet[0].X,Planet[0].Y);
-         glVertex2f(ptB.X,ptB.Y);
-         
-         glVertex2f(Planet[1].X,Planet[1].Y);
-         glVertex2f(ptB.X,ptB.Y);
-         
-         glColor4ub(0,128,255,255);
-         glVertex2f(Planet[0].X,Planet[0].Y);
-         glVertex2f(ptC.X,ptC.Y);
-         
-         glColor4ub(0,255,255,255);
-         glVertex2f(Planet[1].X,Planet[1].Y);
-         glVertex2f(ptC.X,ptC.Y);
-         
-         glColor4ub(0,0,255,255);
-         glVertex2f(ptC.X + Cos(ptCAngle + Pi/2) * 5000, ptC.Y + Sin(ptCAngle + Pi/2) * 5000);
-         glVertex2f(ptC.X - Cos(ptCAngle + Pi/2) * 5000, ptC.Y - Sin(ptCAngle + Pi/2) * 5000);
-         
-      glEnd();
-      
-      CH_to_XY(Traveller,0,@Trav);
-      glBegin(GL_QUADS);
-         
-         glColor4ub(255,0,0,255);
-         
-         glVertex2f(Trav.X - (10 * CamScaleFactor), Trav.Y - (10 * CamScaleFactor));
-         glVertex2f(Trav.X - (10 * CamScaleFactor), Trav.Y + (10 * CamScaleFactor));
-         glVertex2f(Trav.X + (10 * CamScaleFactor), Trav.Y + (10 * CamScaleFactor));
-         glVertex2f(Trav.X + (10 * CamScaleFactor), Trav.Y - (10 * CamScaleFactor));
-         
-      glEnd();
-      
-   Sour.FinishFrame();
    end;
+
 
 Procedure CountFrames();
    Var WindowName : AnsiString;
@@ -195,6 +135,7 @@ Procedure CountFrames();
       FrameTime += Time;
       If (FrameTime < 1000) then Exit;
       
+      WriteStr(FrameStr,'FPS: ',Frames);
       WriteStr(WindowName, GAME_NAME, ' v.', GAME_VERSION, ' (', Frames, ' FPS)');
       SDL_WM_SetCaption(PChar(WindowName), PChar(WindowName));
       
@@ -207,11 +148,25 @@ begin // MAIN
    
    SDL_Init(SDL_INIT_VIDEO or SDL_INIT_AUDIO or SDL_INIT_TIMER);
    
+   Icon := IMG_Load('gfx/iconA.png');
+   SDL_WM_SetIcon(Icon, NIL);
+   
    Sour.SetGLAttributes(8,8,8,1);
    Screen := Sour.OpenWindow(800,600);
    
    SDL_WM_SetCaption(PChar(GAME_NAME),PChar(GAME_NAME));
    Sour.SetClearColour(Sour.MakeColour(0,0,0));
+   
+   FontA := Sour.LoadFont('gfx/font.png',$000000,7,9,#32);
+   Sour.SetFontSpacing(FontA,1,1);
+   
+   TechnoUI[UIS_CRYSTALS] := Sour.LoadImage('gfx/techno-crystal.png',$000000);
+   TechnoUI[UIS_TIMBER  ] := Sour.LoadImage('gfx/techno-timber.png',$000000);
+   TechnoUI[UIS_METAL   ] := Sour.LoadImage('gfx/techno-metal.png',$000000);
+   
+   TribalUI[UIS_CRYSTALS] := Sour.LoadImage('gfx/tribal-crystal.png',$000000);
+   TribalUI[UIS_TIMBER  ] := Sour.LoadImage('gfx/tribal-timber.png',$000000);
+   TribalUI[UIS_METAL   ] := Sour.LoadImage('gfx/tribal-metal.png',$000000);
    
    With Planet[0] do begin
       X := 2000; Y := 2000; R := 2000
@@ -224,6 +179,29 @@ begin // MAIN
    CalcPlanetZones();
    Traveller := 0;
    
+   SetLength(Resource, 20);
+   For ResourceNum := 0 to 19 do begin
+      New(Resource[ResourceNum]);
+      
+      Resource[ResourceNum]^.Typ := TResourceType(Random(3));
+      Resource[ResourceNum]^.Amount := 100+Random(51);
+      
+      Resource[ResourceNum]^.C := Random() * Planet[1].Cmax
+   end;
+   ResourceNum += 1;
+   
+   SetLength(Creature, 5);
+   For CreatureNum := 0 to 4 do begin
+      New(Creature[CreatureNum],Create());
+      
+      Creature[CreatureNum]^.C := Random() * Planet[1].Cmax;
+      Creature[CreatureNum]^.Speed := 150 + Random() * 300;
+      
+      Creature[CreatureNum]^.Order := CROR_WALK;
+      Creature[CreatureNum]^.OrderTarget := Trunc(Random() * Planet[1].Cmax);
+   end;
+   CreatureNum += 1;
+   
    Repeat
       
       AdvanceTime();
@@ -234,6 +212,8 @@ begin // MAIN
       
       ProcessEvents();
       MoveCamera();
+      
+      CalculateCreatures();
       
       DrawFrame();
       CountFrames()
