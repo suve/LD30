@@ -1,66 +1,13 @@
 program ld30;
 
-{$MODE OBJFPC} {$COPERATORS ON}
+{$INCLUDE defines.inc}
 
-uses SysUtils, SDL, SDL_Image, SDL_Mixer, Sour, GL;
-
-Const
-   GAME_NAME = 'LD30';
-   GAME_VMAJOR = 0;
-   GAME_VMINOR = 1;
-   GAME_VBUGFX = 0;
-   GAME_VERSION = Chr(GAME_VMAJOR) + '.' + Chr(GAME_VMINOR) + '.' + Chr(GAME_VBUGFX);
-
-   SDL_TICKS_PER_SECOND = 1000;
-   PLANET_GRANULARITY = 10;
-   CAMERA_SPEED = 500;
-
-Type
-   sInt = System.NativeInt;
-   uInt = System.NativeUInt;
-
-Type
-   PDir = ^TDir;
-   TDir = (DIR_UP, DIR_RIGHT, DIR_DOWN, DIR_LEFT);
-
-Const
-   DIR_RI = DIR_RIGHT;
-   DIR_DO = DIR_DOWN;
-   DIR_LE = DIR_LEFT;
-   
-   SDLK_RI = SDLK_RIGHT;
-   SDLK_DO = SDLK_DOWN;
-   SDLK_LE = SDLK_LEFT;
-
-Type
-   PPoint = ^TPoint;
-   TPoint = record
-      X, Y : Double
-   end;
-   
-   PPlanet = ^TPlanet;
-   TPlanet = record
-      X, Y, R : Double
-   end;
+uses
+   SysUtils, SDL, SDL_Image, SDL_Mixer, Sour, GL,
+   Globals;
 
 Var
-   Screen : PSDL_Surface = NIL;
-   Terminate : Boolean = FALSE;
-   Ev : TSDL_Event;
-   
-   Ticks, Time : uInt;
-   dT : Double;
-   
-   Frames : uInt = 0;
-   FrameTime : uInt = 0;
-   
-   Planet : Array[0..1] of TPlanet;
-   
-   Camera : TPoint = (X:0.0; Y:0.0);
-   CamMove : Array[TDir] of Boolean = (False,False,False,False);
-
-   CamScale : sInt = 10;
-   CamScaleFactor : Double = 1;
+   Traveller : Double;
 
 Procedure AdvanceTime();
    begin
@@ -74,22 +21,37 @@ Procedure AdvanceTime();
       dT := Time / SDL_TICKS_PER_SECOND
    end;
 
-Procedure CameraZoom(Const Change:sInt);
+Const
+   ZOOM_KEYBOARD = FALSE; ZOOM_MOUSE = TRUE;
+
+Procedure CameraZoom(Const Change:sInt;Const Mouse:Boolean);
    Var CtrX, CtrY, NewScaleFactor : Double;
+       NewScale : sInt;
    begin
-      CamScale += Change;
-      If (CamScale <  1) then CamScale :=  1 else
-      If (CamScale > 10) then CamScale := 10;
+      NewScale := CamScale + Change;
+      If (NewScale <  1) then NewScale :=  1 else
+      If (NewScale > 10) then NewScale := 10;
       
-      NewScaleFactor := (11 - CamScale);
+      If (NewScale = CamScale) then Exit();
       
-      CtrX := Camera.X + (Screen^.W / 2) * CamScaleFactor;
-      CtrY := Camera.Y + (Screen^.H / 2) * CamScaleFactor;
+      NewScaleFactor := (11 - NewScale);
       
-      Camera.X := CtrX - (Screen^.W / 2) * NewScaleFactor;
-      Camera.Y := CtrY - (Screen^.H / 2) * NewScaleFactor;
+      If (Not Mouse) then begin
+         CtrX := Camera.X + (Screen^.W / 2) * CamScaleFactor;
+         CtrY := Camera.Y + (Screen^.H / 2) * CamScaleFactor;
+         
+         Camera.X := CtrX - (Screen^.W / 2) * NewScaleFactor;
+         Camera.Y := CtrY - (Screen^.H / 2) * NewScaleFactor
+      end else begin
+         CtrX := Camera.X + mX * CamScaleFactor;
+         CtrY := Camera.Y + mY * CamScaleFactor;
+         
+         Camera.X := CtrX - mX * NewScaleFactor;
+         Camera.Y := CtrY - mY * NewScaleFactor
+      end;
       
-      CamScaleFactor := NewScaleFactor
+      CamScaleFactor := NewScaleFactor;
+      CamScale := NewScale
    end;
 
 Procedure ProcessEvents();
@@ -102,8 +64,8 @@ Procedure ProcessEvents();
             SDL_KeyDown:
                Case (Ev.Key.Keysym.Sym) of
                   SDLK_ESCAPE: Terminate := True;
-                  SDLK_MINUS: CameraZoom(-1);
-                  SDLK_EQUALS: CameraZoom(+1);
+                  SDLK_MINUS: CameraZoom(-1, ZOOM_KEYBOARD);
+                  SDLK_EQUALS: CameraZoom(+1, ZOOM_KEYBOARD);
                   
                   SDLK_UP: CamMove[DIR_UP] := True;
                   SDLK_RI: CamMove[DIR_RI] := True;
@@ -119,11 +81,26 @@ Procedure ProcessEvents();
                   SDLK_LE: CamMove[DIR_LE] := False;
                end;
             
+            SDL_MouseMotion: begin
+               mX := Ev.Motion.X;
+               mY := Ev.Motion.Y;
+            end;
+            
+            SDL_MouseButtonDown: begin
+               mX := Ev.Button.X;
+               mY := Ev.Button.Y;
+               
+               Case (Ev.Button.Button) of
+                  SDL_BUTTON_WHEELDOWN: CameraZoom(-1, ZOOM_MOUSE);
+                  SDL_BUTTON_WHEELUP: CameraZoom(+1, ZOOM_MOUSE);
+               end;
+            end;
+            
          end;
    end;
 
 Procedure MoveCamera();
-   Var XMove, YMove : sInt; Scale : Double;
+   Var XMove, YMove : sInt;
    begin
       XMove := 0; YMove := 0;
       
@@ -144,6 +121,7 @@ Procedure MoveCamera();
 Procedure DrawFrame();
    Var Pl, Points, Pt : sInt;
        Angle, Circumference : Double;
+       Trav : TPoint;
    begin
    Sour.BeginFrame();
       
@@ -163,6 +141,48 @@ Procedure DrawFrame();
             end;
          glEnd();
       end;
+      
+      glBegin(GL_LINES);
+         glColor4ub(255,0,0,255);
+         
+         glVertex2f(Planet[0].X,Planet[0].Y);
+         glVertex2f(ptA.X,ptA.Y);
+         
+         glVertex2f(Planet[1].X,Planet[1].Y);
+         glVertex2f(ptA.X,ptA.Y);
+         
+         glColor4ub(255,255,0,255);
+         glVertex2f(Planet[0].X,Planet[0].Y);
+         glVertex2f(ptB.X,ptB.Y);
+         
+         glVertex2f(Planet[1].X,Planet[1].Y);
+         glVertex2f(ptB.X,ptB.Y);
+         
+         glColor4ub(0,128,255,255);
+         glVertex2f(Planet[0].X,Planet[0].Y);
+         glVertex2f(ptC.X,ptC.Y);
+         
+         glColor4ub(0,255,255,255);
+         glVertex2f(Planet[1].X,Planet[1].Y);
+         glVertex2f(ptC.X,ptC.Y);
+         
+         glColor4ub(0,0,255,255);
+         glVertex2f(ptC.X + Cos(ptCAngle + Pi/2) * 5000, ptC.Y + Sin(ptCAngle + Pi/2) * 5000);
+         glVertex2f(ptC.X - Cos(ptCAngle + Pi/2) * 5000, ptC.Y - Sin(ptCAngle + Pi/2) * 5000);
+         
+      glEnd();
+      
+      CH_to_XY(Traveller,0,@Trav);
+      glBegin(GL_QUADS);
+         
+         glColor4ub(255,0,0,255);
+         
+         glVertex2f(Trav.X - (10 * CamScaleFactor), Trav.Y - (10 * CamScaleFactor));
+         glVertex2f(Trav.X - (10 * CamScaleFactor), Trav.Y + (10 * CamScaleFactor));
+         glVertex2f(Trav.X + (10 * CamScaleFactor), Trav.Y + (10 * CamScaleFactor));
+         glVertex2f(Trav.X + (10 * CamScaleFactor), Trav.Y - (10 * CamScaleFactor));
+         
+      glEnd();
       
    Sour.FinishFrame();
    end;
@@ -198,12 +218,19 @@ begin // MAIN
    end;
    
    With Planet[1] do begin
-      X := 3000; Y := 3000; R := 1500
+      X := 3500; Y := 3500; R := 1500
    end;
+   
+   CalcPlanetZones();
+   Traveller := 0;
    
    Repeat
       
       AdvanceTime();
+      
+      Traveller += dT * 3690;
+      If (Traveller > Planet[1].Cmax)
+         then Traveller -= Planet[1].Cmax;
       
       ProcessEvents();
       MoveCamera();

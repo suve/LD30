@@ -1,0 +1,182 @@
+unit globals;
+
+{$INCLUDE defines.inc}
+
+interface
+   uses SDL;
+
+Const
+   GAME_NAME = 'LD30';
+   GAME_VMAJOR = 0;
+   GAME_VMINOR = 1;
+   GAME_VBUGFX = 0;
+   GAME_VERSION = Chr(GAME_VMAJOR) + '.' + Chr(GAME_VMINOR) + '.' + Chr(GAME_VBUGFX);
+
+   SDL_TICKS_PER_SECOND = 1000;
+   PLANET_GRANULARITY = 10;
+   CAMERA_SPEED = 500;
+
+Type
+   sInt = System.NativeInt;
+   uInt = System.NativeUInt;
+
+Type
+   PDir = ^TDir;
+   TDir = (DIR_UP, DIR_RIGHT, DIR_DOWN, DIR_LEFT);
+
+Const
+   DIR_RI = DIR_RIGHT;
+   DIR_DO = DIR_DOWN;
+   DIR_LE = DIR_LEFT;
+   
+   SDLK_RI = SDLK_RIGHT;
+   SDLK_DO = SDLK_DOWN;
+   SDLK_LE = SDLK_LEFT;
+
+Type
+   PPoint = ^TPoint;
+   TPoint = record
+      X, Y : Double
+   end;
+   
+   PPlanet = ^TPlanet;
+   TPlanet = record
+      X, Y, R : Double;
+      Circu, Cmin, Cmax, AngDelta : Double;
+      Points : uInt;
+   end;
+
+Var
+   Screen : PSDL_Surface = NIL;
+   Terminate : Boolean = FALSE;
+   Ev : TSDL_Event;
+   
+   Ticks, Time : uInt;
+   dT : Double;
+   
+   Frames : uInt = 0;
+   FrameTime : uInt = 0;
+   
+   Planet : Array[0..1] of TPlanet;
+   
+   ptA, ptB, ptC : TPoint; 
+   ptCAngle : Double;
+   
+   mX, mY : sInt;
+   
+   Camera : TPoint = (X:0.0; Y:0.0);
+   CamMove : Array[TDir] of Boolean = (False,False,False,False);
+
+   CamScale : sInt = 10;
+   CamScaleFactor : Double = 1;
+
+Procedure CalcPlanetZones();
+
+Procedure CH_to_XY(Const C,H:Double;Const Point:PPoint);
+Function CH_to_XY(Const C,H:Double):TPoint;
+
+
+
+implementation
+   uses Math;
+
+Function GetAngle(Const Sin,Cos:Double):Double;
+   begin
+      If (Sin > 0)
+         then GetAngle:=ArcCos(Cos)
+         else GetAngle:=2*Pi-ArcCos(Cos)
+   end;
+
+Function GetAngle(Const aX,aY,bX,bY:Double):Double;
+   Var diffX, diffY, dist : Double;
+   begin
+      diffX := bX - aX;
+      diffY := bY - aY;
+      dist := Sqrt(Sqr(diffX) + Sqr(diffY));
+      Exit(GetAngle(diffY / dist, diffX / dist))
+   end;
+
+Procedure CalcPlanetZones();
+   Var
+      ctrD : Array[0..1] of Double;
+      ctrCos, ctrSin, ctrAngle, ctrDist : Double;
+      
+      ptCos, ptSin, ptAngle : Double;
+      
+      //PtA, PtB : TPoint;
+   begin
+      // Calculate X and Y difference between planets
+      ctrCos := Planet[1].X - Planet[0].X;
+      ctrSin := Planet[1].Y - Planet[0].Y;
+      
+      // Calculate distance and cos/sin
+      ctrDist := Sqrt(Sqr(ctrCos) + Sqr(ctrSin));
+      ctrCos /= ctrDist; ctrSin /= ctrDist;
+      
+      // Calculate angle between planets
+      ctrAngle := GetAngle(ctrSin, ctrCos);
+      
+      // Calculate distance from planet centres to radical line
+      ctrD[0] := Sqr(ctrDist) - Sqr(Planet[1].R) + Sqr(Planet[0].R); 
+      ctrD[1] := Sqr(ctrDist) - Sqr(Planet[0].R) + Sqr(Planet[1].R); 
+      ctrD[0] /= 2 * ctrDist; ctrD[1] /= 2 * ctrDist;
+      
+      ptC.X := Planet[0].X + Cos(ctrAngle) * ctrD[0];
+      ptC.Y := Planet[0].Y + Sin(ctrAngle) * ctrD[0];
+      ptCAngle := ctrAngle;
+      
+      ptCos := ctrD[0] / Planet[0].R;
+      ptSin := Sqrt(1 - Sqr(ptCos));
+      
+      ptAngle := GetAngle(+ptSin, ptCos);
+      ptA.X := Planet[0].X + Cos(ptAngle + ctrAngle) * Planet[0].R;
+      ptA.Y := Planet[0].Y + Sin(ptAngle + ctrAngle) * Planet[0].R;
+      Writeln('ptA: ',PtA.X:8:3,':',PtA.Y:8:3,'; angle: ',Trunc(ptAngle*180/Pi));
+      
+      Planet[0].Cmin := 0;
+      Planet[0].Cmax := (2*(Pi - ptAngle)) * Planet[0].R;
+      
+      Planet[0].Circu := 2 * Pi * Planet[0].R;
+      Planet[0].AngDelta := GetAngle(Planet[0].X,Planet[0].Y,ptA.X,ptA.Y);
+      
+      //ptAngle := GetAngle(-ptSin, ptCos);
+      ptAngle := -ptAngle;
+      ptB.X := Planet[0].X + Cos(ptAngle + ctrAngle) * Planet[0].R;
+      ptB.Y := Planet[0].Y + Sin(ptAngle + ctrAngle) * Planet[0].R;
+      Writeln('ptB: ',PtB.X:8:3,':',PtB.Y:8:3,'; angle: ',Trunc(ptAngle*180/Pi));
+      
+      ptCos := ctrD[1] / Planet[1].R;
+      ptSin := Sqrt(1 - Sqr(ptCos));
+      ptAngle := GetAngle(+ptSin, ptCos);
+      
+      Planet[1].Cmin := Planet[0].Cmax;
+      Planet[1].Cmax := Planet[0].Cmax + (2*(Pi - ptAngle)) * Planet[1].R;
+      
+      Planet[1].Circu := 2 * Pi * Planet[1].R;
+      Planet[1].AngDelta := GetAngle(Planet[1].X,Planet[1].Y,ptB.X,ptB.Y);
+      
+      Writeln('Planet[0]: ',Trunc(Planet[0].Cmin):5,' - ',Trunc(Planet[0].Cmax):5,'; delta: ',Trunc(Planet[0].AngDelta*180/Pi));
+      Writeln('Planet[1]: ',Trunc(Planet[1].Cmin):5,' - ',Trunc(Planet[1].Cmax):5,'; delta: ',Trunc(Planet[1].AngDelta*180/Pi));
+   end;
+
+Procedure CH_to_XY(Const C,H:Double;Const Point:PPoint);
+   Var Angle : Double; pl : sInt;
+   begin
+      If (C <= Planet[0].Cmax) then begin
+         Angle := C / Planet[0].Circu;
+         pl := 0;
+      end else begin
+         Angle := (C - Planet[1].Cmin) / Planet[1].Circu;
+         pl := 1;
+      end;
+      Angle *= 2 * Pi;
+      Point^.X := Planet[pl].X + Cos(Planet[pl].AngDelta + Angle) * Planet[pl].R;
+      Point^.Y := Planet[pl].Y + Sin(Planet[pl].AngDelta + Angle) * Planet[pl].R;
+   end;
+
+Function CH_to_XY(Const C,H:Double):TPoint;
+   begin
+      CH_to_XY(C,H,@Result)
+   end;
+
+end.
