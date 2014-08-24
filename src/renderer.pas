@@ -34,60 +34,6 @@ Procedure DrawPlanets();
       end
    end;
 
-Procedure DrawCrystal(Const Pt:PPoint;Const Ang:PDouble);
-   begin
-      glColor4ub(0,255,255,255);
-      glVertex2f(Pt^.X + 5 * Cos(Ang^ - Pi / 2), Pt^.Y + 5 * Sin(Ang^ - Pi / 2));
-      glVertex2f(Pt^.X + 8 * Cos(Ang^ - Pi / 4), Pt^.Y + 8 * Sin(Ang^ - Pi / 4));
-      
-      glVertex2f(Pt^.X + 8 * Cos(Ang^ - Pi / 4), Pt^.Y + 8 * Sin(Ang^ - Pi / 4));
-      glVertex2f(Pt^.X + 12 * Cos(Ang^), Pt^.Y + 12 * Sin(Ang^));
-      
-      glVertex2f(Pt^.X + 12 * Cos(Ang^), Pt^.Y + 12 * Sin(Ang^));
-      glVertex2f(Pt^.X + 8 * Cos(Ang^ + Pi / 4), Pt^.Y + 8 * Sin(Ang^ + Pi / 4));
-      
-      glVertex2f(Pt^.X + 8 * Cos(Ang^ + Pi / 4), Pt^.Y + 8 * Sin(Ang^ + Pi / 4));
-      glVertex2f(Pt^.X + 5 * Cos(Ang^ + Pi / 2), Pt^.Y + 5 * Sin(Ang^ + Pi / 2));
-   end;
-
-Procedure DrawMetal(Const Pt:PPoint;Const Ang:PDouble);
-   begin
-      glColor4ub(128,128,128,255);
-      glVertex2f(Pt^.X + 6 * Cos(Ang^ - Pi/2), Pt^.Y + 6 * Sin(Ang^ - Pi/2));
-      glVertex2f(Pt^.X + 6*Sqrt(2) * Cos(Ang^ - Pi/4), Pt^.Y + 6*Sqrt(2) * Sin(Ang^ - Pi/4));
-      
-      glVertex2f(Pt^.X + 6*Sqrt(2) * Cos(Ang^ - Pi/4), Pt^.Y + 6*Sqrt(2) * Sin(Ang^ - Pi/4));
-      glVertex2f(Pt^.X + 6*Sqrt(2) * Cos(Ang^ + Pi/4), Pt^.Y + 6*Sqrt(2) * Sin(Ang^ + Pi/4));
-      
-      glVertex2f(Pt^.X + 6*Sqrt(2) * Cos(Ang^ + Pi/4), Pt^.Y + 6*Sqrt(2) * Sin(Ang^ + Pi/4));
-      glVertex2f(Pt^.X + 6 * Cos(Ang^ + Pi/2), Pt^.Y + 6 * Sin(Ang^ + Pi/2));
-   end;
-
-Procedure DrawWood(Const Pt:PPoint;Const Ang:PDouble);
-   Var old, new : TPoint;
-   begin
-      glColor4ub(140,60,10,255);
-      glVertex2f(Pt^.X + 6 * Cos(Ang^ - Pi/2), Pt^.Y + 6 * Sin(Ang^ - Pi/2));
-      glVertex2f(Pt^.X + 6*Sqrt(2) * Cos(Ang^ - Pi/4), Pt^.Y + 6*Sqrt(2) * Sin(Ang^ - Pi/4));
-      
-      glColor4ub(0,180,0,255);
-      glVertex2f(Pt^.X + 6*Sqrt(2) * Cos(Ang^ - Pi/4), Pt^.Y + 6*Sqrt(2) * Sin(Ang^ - Pi/4));
-      glVertex2f(Pt^.X + 12 * Cos(Ang^ - Pi/3), Pt^.Y + 12 * Sin(Ang^ - Pi/3));
-      
-      glVertex2f(Pt^.X + 12 * Cos(Ang^ - Pi/3), Pt^.Y + 12 * Sin(Ang^ - Pi/3));
-      glVertex2f(Pt^.X + 15 * Cos(Ang^), Pt^.Y + 15 * Sin(Ang^));
-      
-      glVertex2f(Pt^.X + 15 * Cos(Ang^), Pt^.Y + 15 * Sin(Ang^));
-      glVertex2f(Pt^.X + 12 * Cos(Ang^ + Pi/3), Pt^.Y + 12 * Sin(Ang^ + Pi/3));
-      
-      glVertex2f(Pt^.X + 12 * Cos(Ang^ + Pi/3), Pt^.Y + 12 * Sin(Ang^ + Pi/3));
-      glVertex2f(Pt^.X + 6*Sqrt(2) * Cos(Ang^ + Pi/4), Pt^.Y + 6*Sqrt(2) * Sin(Ang^ + Pi/4));
-      
-      glColor4ub(140,60,10,255);
-      glVertex2f(Pt^.X + 6*Sqrt(2) * Cos(Ang^ + Pi/4), Pt^.Y + 6*Sqrt(2) * Sin(Ang^ + Pi/4));
-      glVertex2f(Pt^.X + 6 * Cos(Ang^ + Pi/2), Pt^.Y + 6 * Sin(Ang^ + Pi/2));
-   end;
-
 
 Procedure DrawSelBox(Const dX,dY,dW,dH,Rot:Double);
    Const BoxSize = 7;

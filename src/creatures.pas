@@ -9,16 +9,17 @@ Type
    TCreatureStats = record
       W, H : uInt;
       MaxHP, Speed : Double;
-      Collect, Build : Boolean;
+      Collect: sInt;
+      Build : Boolean;
    end;
 
 Const
    CreatureStats : Array[TCreatureType] of TCreatureStats = (
-      (W: 15; H: 21; MaxHP: 120; Speed: 180; Collect: True; Build: True),
-      (W: 15; H: 21; MaxHP: 150; Speed: 360; Collect: False; Build: False),
-      (W: 15; H: 21; MaxHP: 250; Speed: 250; Collect: False; Build: False),
-      (W: 15; H: 21; MaxHP: 170; Speed: 285; Collect: False; Build: False),
-      (W: 15; H: 21; MaxHP:  90; Speed: 170; Collect: True; Build: True),
+      (W: 15; H: 21; MaxHP: 120; Speed: 180; Collect: 12; Build: True),
+      (W: 15; H: 21; MaxHP: 150; Speed: 360; Collect: 0; Build: False),
+      (W: 15; H: 21; MaxHP: 250; Speed: 250; Collect: 0; Build: False),
+      (W: 15; H: 21; MaxHP: 170; Speed: 285; Collect: 0; Build: False),
+      (W: 15; H: 21; MaxHP:  90; Speed: 170; Collect: 10; Build: True),
       ()
    );
 
@@ -33,8 +34,8 @@ Type
       Order : TCreatureOrder;
       OrderTarget : sInt;
       
-      // Function X():Double;
-      // Function Y():Double;
+      CarryType : TResourceType;
+      CarryAmount : Double;
       
       Procedure WalkTowards(Const dest:Double);
       Procedure Calculate(); Virtual;
@@ -85,6 +86,7 @@ Procedure TCreature.WalkTowards(Const dest:Double);
    end;
 
 Procedure TCreature.Calculate();
+   Const MINING_SPEED = 4;
    begin
       Case (Self.Order) of
          
@@ -95,23 +97,44 @@ Procedure TCreature.Calculate();
          CROR_WALK: begin
             WalkTowards(Self.OrderTarget);
 
-            If (Abs(Self.C - OrderTarget) < 10) 
+            If (CDist(Self.C, OrderTarget) < 10) 
                then Self.Order := CROR_PATROL
          end;
          
          CROR_COL_CRYS, CROR_COL_TIMB, CROR_COL_META: begin
-            If (Resource[OrderTarget] = NIL) or (Resource[OrderTarget]^.Amount <= 0) then begin
-               OrderTarget := NearestResource(@Self, TResourceType(Ord(Self.Order) - Ord(CROR_COL_CRYS)));
+            If (OrderTarget < 0) or (Resource[OrderTarget] = NIL) or (Resource[OrderTarget]^.Amount <= 0) then begin
+               OrderTarget := NearestResource(Self.C, TResourceType(Ord(Self.Order) - Ord(CROR_COL_CRYS)));
                If (OrderTarget < 0) then begin
-                  Self.Order := CROR_PATROL
+                  Self.Order := CROR_PATROL;
+                  Exit()
                end;
             end;
             
-            If (CDist(Self.C, Resource[OrderTarget]^.C) < 5) then begin
+            If (CDist(Self.C, Resource[OrderTarget]^.C) < 10) then begin
+            
+               If (Self.CarryType <> Resource[OrderTarget]^.Typ) then begin
+                  Self.CarryType := Resource[OrderTarget]^.Typ;
+                  Self.CarryAmount := 0.0
+               end;
+               Self.CarryAmount += dt * MINING_SPEED;
                
+               Self.Anim := TCreatureAnim(Ord(CRAN_CRYST) + Ord(Self.CarryType));
+               
+               If (Self.CarryAmount >= CreatureStats[Self.Typ].Collect) then
+                  Self.Order := TCreatureOrder(Ord(Self.Order) + 3);
+               
+               MineResource(OrderTarget, dt * MINING_SPEED);
                
             end else Self.WalkTowards(Resource[OrderTarget]^.C)
          end;
+         
+         CROR_RET_CRYS, CROR_RET_TIMB, CROR_RET_META:begin
+            WalkTowards(1000);
+
+            If (CDist(Self.C,1000) < 10)
+               then Self.Order := CROR_PATROL
+         end;
+            
          
       end
    end;

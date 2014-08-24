@@ -105,7 +105,7 @@ Procedure MakeSelection();
 Procedure IssueOrder();
    Var
       cX, cY, cCos, cSin, cDist, cAng, cC : Double;
-      pl, Idx : uInt;
+      pl, Idx : uInt; Res : sInt;
    begin
       If (SelType < SEL_CREAT) or (SelLen <= 0) then Exit();
       cX := Camera.X + mX * CamScaleFactor;
@@ -123,15 +123,22 @@ Procedure IssueOrder();
          If (cAng < 0) then cAng += 2*Pi;
          cC := Planet[pl].Cmin + cAng * Planet[pl].R;
          
-         Writeln('Planet ',pl,' cC: ',Trunc(cC),' (',Trunc(Planet[pl].Cmin),' - ',Trunc(Planet[pl].Cmax),')');
+         Res := ResourceAvailable(cC,48);
+         
+         Writeln('Planet ',pl,' cC: ',Trunc(cC),' (',Trunc(Planet[pl].Cmin),' - ',Trunc(Planet[pl].Cmax),'); Res: ',Res);
          
          If (cC >= Planet[pl].Cmin) and (cC <= Planet[pl].Cmax) then begin
             If (SelType = SEL_CREAT) then
                For Idx:=0 to (SelLen - 1) do
                   If (SelID[Idx] >= 0) and (SelID[Idx] < CreatureLen) then
                      If (Creature[SelID[Idx]] <> NIL) then begin
-                        Creature[SelID[Idx]]^.Order := CROR_WALK;
-                        Creature[SelID[Idx]]^.OrderTarget := Trunc(cC);
+                        If (Res >= 0) and (CreatureStats[Creature[SelID[Idx]]^.Typ].Collect > 0) then begin
+                           Creature[SelID[Idx]]^.Order := TCreatureOrder(Ord(CROR_COL_CRYS) + Ord(Resource[Res]^.Typ));
+                           Creature[SelID[Idx]]^.OrderTarget := Res;
+                        end else begin
+                           Creature[SelID[Idx]]^.Order := CROR_WALK;
+                           Creature[SelID[Idx]]^.OrderTarget := Trunc(cC);
+                        end;
                      end;
             Exit()
          end;
