@@ -209,8 +209,8 @@ Procedure DrawCreatures();
          CH_to_XYA(Creature[C]^.C, 0, @crPt, @crAn);
          
          DrawSprite(CreatureGfx,
-            Fork(Creature[C]^.Typ >= CRTRIB_WORK, 45, 0),
-            Fork(Creature[C]^.Typ >= CRTRIB_WORK, Ord(Creature[C]^.Typ) - Ord(CRTRIB_WORK), Ord(Creature[C]^.Typ))*21,
+            15 * (Ord(Creature[C]^.Facing) + 3 * Ord(Creature[C]^.Anim)),
+            Ord(Creature[C]^.Typ)*21,
             15, 21,
             crPt.X, crPt.Y,
             15 * 2, 21 * 2,
@@ -230,7 +230,7 @@ Procedure DrawSelection();
          glBegin(GL_LINES);
          glColor4ub(0,255,0,255);
          For Idx := 0 to (SelLen - 1) do
-            If (SelID[Idx] > 0) and (SelID[Idx] < CreatureLen) then
+            If (SelID[Idx] >= 0) and (SelID[Idx] < CreatureLen) then
                If (Creature[SelID[Idx]] <> NIL) then begin
                   CH_to_XYA(Creature[SelID[Idx]]^.C, 0, @pt, @rot);
                   DrawSelBox(pt.X,pt.Y,30,42,Rot);
@@ -242,13 +242,65 @@ Procedure DrawSelection();
          glBegin(GL_LINES);
          glColor4ub(0,255,0,255);
          For Idx := 0 to (SelLen - 1) do
-            If (SelID[Idx] > 0) and (SelID[Idx] < BuildingLen) then
+            If (SelID[Idx] >= 0) and (SelID[Idx] < BuildingLen) then
                If (Building[SelID[Idx]] <> NIL) then begin
                   CH_to_XYA(Building[SelID[Idx]]^.C, 0, @pt, @rot);
                   DrawSelBox(pt.X,pt.Y,30,42,Rot);
                end;
          glEnd();
       end else
+   end;
+
+
+Procedure DrawRay();
+   Var
+      cX, cY, cCos, cSin, cDist, cAng, cC : Double;
+      pl, Idx : uInt; pt:TPoint;
+   begin
+      cX := Camera.X + mX * CamScaleFactor;
+      cY := Camera.Y + mY * CamScaleFactor;
+      
+      Sour.TexDisable();
+      glBegin(GL_LINES);
+      
+      glColor4ub(255,0,0,255);
+      glVertex2f(cX,cY);
+      glVertex2f(Planet[0].X,Planet[0].Y);
+      
+      glColor4ub(255,255,0,255);
+      glVertex2f(cX,cY);
+      glVertex2f(Planet[1].X,Planet[1].Y);
+      
+      glEnd();
+      
+      If(Sqrt(Sqr(cX - Planet[0].X) + Sqr(cY - Planet[0].Y)) < Planet[0].R) then Exit();
+      If(Sqrt(Sqr(cX - Planet[1].X) + Sqr(cY - Planet[1].Y)) < Planet[1].R) then Exit();
+      
+      For pl := 0 to 1 do begin
+         cCos := cX - Planet[pl].X; cSin := cY - Planet[pl].Y;
+         cDist := Sqrt(Sqr(cCos) + Sqr(cSin));
+         cCos /= cDist; cSin /= cDist;
+         
+         cAng := GetAngle(cSin,cCos) - Planet[pl].AngDelta;
+         If (cAng < 0) then cAng += 2*Pi;
+         cC := Planet[pl].Cmin + cAng * Planet[pl].R;
+         
+         //Writeln('Planet ',pl,' cC: ',Trunc(cC),' (',Trunc(Planet[pl].Cmin),' - ',Trunc(Planet[pl].Cmax),')');
+         
+         If (cC >= Planet[pl].Cmin) and (cC <= Planet[pl].Cmax) then begin
+            CH_to_XY(cC,0,@pt);
+            glBegin(GL_QUADS);
+               
+               glColor4ub(255,0,255,255);
+               glVertex2f(pt.X - 5, pt.Y - 5);
+               glVertex2f(pt.X - 5, pt.Y + 5);
+               glVertex2f(pt.X + 5, pt.Y + 5);
+               glVertex2f(pt.X + 5, pt.Y - 5);
+               
+            glEnd();
+            Exit()
+         end;
+      end;
    end;
 
 
@@ -298,7 +350,7 @@ Procedure DrawUI_Selection(Const UIType:TUIType;Const UI_Space:uInt);
       Rekt : Sour.TCrd;
    begin
       If (SelType = SEL_CREAT) then begin
-         Rekt.X := 3; Rekt.Y := 3;
+         Rekt.X := 10; Rekt.Y := 10;
          Sour.DrawImage(UIGfx[UIType][UIS_SEL_L],NIL,@Rekt);
          
          Rekt.X += UI_Space;
@@ -310,20 +362,15 @@ Procedure DrawUI_Selection(Const UIType:TUIType;Const UI_Space:uInt);
          Sour.DrawImage(UIGfx[UIType][UIS_SEL_R],NIL,@Rekt);
          
          Sour.TexBind(CreatureGfx^.Tex);
-         Rekt.X := 3 + UI_Space + 1; Rekt.Y += 7;
+         Rekt.X := 10 + UI_Space + 1; Rekt.Y += 7;
          
          glBegin(GL_QUADS);
          For Idx := 0 to (SelLen - 1) do
-            If (SelID[Idx] > 0) and (SelID[Idx] < CreatureLen) then
+            If (SelID[Idx] >= 0) and (SelID[Idx] < CreatureLen) then
                If (Creature[SelID[Idx]] <> NIL) then begin
                   
-                  If (Creature[SelID[Idx]]^.Typ >= CRTRIB_WORK) then begin
-                     aX := 45 + 15;
-                     aY := (Ord(Creature[SelID[Idx]]^.Typ) - Ord(CRTRIB_WORK)) * 21;
-                  end else begin
-                     aX := 0 + 15;
-                     aY := Ord(Creature[SelID[Idx]]^.Typ) * 21;
-                  end;
+                  aX := 45 * Ord(Creature[SelID[Idx]]^.Anim) + 15;
+                  aY := Ord(Creature[SelID[Idx]]^.Typ) * 21;
                   bX := aX + 15; bY := aY + 21;
                   
                   aX /= CreatureGfx^.TexW; bX /= CreatureGfx^.TexW;
@@ -343,7 +390,7 @@ Procedure DrawUI_Selection(Const UIType:TUIType;Const UI_Space:uInt);
          glBegin(GL_LINES);
          glColor4ub(0,255,0,255);
          For Idx := 0 to (SelLen - 1) do
-            If (SelID[Idx] > 0) and (SelID[Idx] < BuildingLen) then
+            If (SelID[Idx] >= 0) and (SelID[Idx] < BuildingLen) then
                If (Building[SelID[Idx]] <> NIL) then begin
                   CH_to_XYA(Building[SelID[Idx]]^.C, 0, @pt, @rot);
                   DrawSelBox(pt.X,pt.Y,30,42,Rot);
@@ -407,10 +454,12 @@ Procedure DrawFrame();
       DrawCreatures();
       
       DrawSelection();
+      //DrawRay();
       
       Sour.SetVisibleArea(0, 0, Screen^.W, Screen^.H);
       
-      DrawUI_Tribal();
+      DrawUI_Techno();
+      //DrawUI_Tribal();
       Sour.PrintText(
          [
             FrameStr,

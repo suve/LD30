@@ -8,8 +8,7 @@ Type
    TEntity = object
       C, H : Double;
       
-      HP, MaxHP : Double;
-      
+      HP : Double;
       Team : uInt;
       
       Procedure Calculate(); Virtual; Abstract;

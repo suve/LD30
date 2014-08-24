@@ -101,6 +101,44 @@ Procedure MakeSelection();
       SelType := SEL_NONE
    end;
 
+
+Procedure IssueOrder();
+   Var
+      cX, cY, cCos, cSin, cDist, cAng, cC : Double;
+      pl, Idx : uInt;
+   begin
+      If (SelType < SEL_CREAT) or (SelLen <= 0) then Exit();
+      cX := Camera.X + mX * CamScaleFactor;
+      cY := Camera.Y + mY * CamScaleFactor;
+      
+      If(Sqrt(Sqr(cX - Planet[0].X) + Sqr(cY - Planet[0].Y)) < Planet[0].R) then Exit();
+      If(Sqrt(Sqr(cX - Planet[1].X) + Sqr(cY - Planet[1].Y)) < Planet[1].R) then Exit();
+      
+      For pl := 0 to 1 do begin
+         cCos := cX - Planet[pl].X; cSin := cY - Planet[pl].Y;
+         cDist := Sqrt(Sqr(cCos) + Sqr(cSin));
+         cCos /= cDist; cSin /= cDist;
+         
+         cAng := GetAngle(cSin,cCos) - Planet[pl].AngDelta;
+         If (cAng < 0) then cAng += 2*Pi;
+         cC := Planet[pl].Cmin + cAng * Planet[pl].R;
+         
+         Writeln('Planet ',pl,' cC: ',Trunc(cC),' (',Trunc(Planet[pl].Cmin),' - ',Trunc(Planet[pl].Cmax),')');
+         
+         If (cC >= Planet[pl].Cmin) and (cC <= Planet[pl].Cmax) then begin
+            If (SelType = SEL_CREAT) then
+               For Idx:=0 to (SelLen - 1) do
+                  If (SelID[Idx] >= 0) and (SelID[Idx] < CreatureLen) then
+                     If (Creature[SelID[Idx]] <> NIL) then begin
+                        Creature[SelID[Idx]]^.Order := CROR_WALK;
+                        Creature[SelID[Idx]]^.OrderTarget := Trunc(cC);
+                     end;
+            Exit()
+         end;
+      end;
+   end;
+
+
 Procedure ProcessEvents();
    begin
       While (SDL_PollEvent(@Ev) > 0) do
@@ -143,6 +181,8 @@ Procedure ProcessEvents();
                      mSelX := Trunc(Camera.X + mX * CamScaleFactor);
                      mSelY := Trunc(Camera.Y + mY * CamScaleFactor);
                   end;
+                  
+                  SDL_BUTTON_RIGHT: IssueOrder();
                   
                   SDL_BUTTON_WHEELDOWN: CameraZoom(-1, ZOOM_MOUSE);
                   SDL_BUTTON_WHEELUP: CameraZoom(+1, ZOOM_MOUSE);
@@ -217,11 +257,9 @@ Procedure CountFrames();
    end;
 
 Procedure LoadGfx();
-   Var CrTy : TCreatureType; BuTy : TBuildingType;
-       FilePath : AnsiString;
    begin
       FontA := Sour.LoadFont('gfx/font.png',$000000,7,9,#32);
-      Sour.SetFontSpacing(FontA,1,1);
+      Sour.SetFontSpacing(FontA,1,2);
       
       UIGfx[UI_TECHNO][UIS_CRYSTALS] := Sour.LoadImage('gfx/techno-crystal.png',$000000);
       UIGfx[UI_TECHNO][UIS_TIMBER  ] := Sour.LoadImage('gfx/techno-timber.png',$000000);
@@ -270,7 +308,7 @@ begin // MAIN
    
    CalcPlanetZones();
    
-   ResourceLen := 20;
+   ResourceLen := 50;
    SetLength(Resource, ResourceLen);
    For ResourceNum := 0 to (ResourceLen-1) do begin
       New(Resource[ResourceNum]);
@@ -282,18 +320,18 @@ begin // MAIN
    end;
    ResourceNum := ResourceLen;
    
-   CreatureLen := 5;
+   CreatureLen := 50;
    SetLength(Creature, CreatureLen);
    For CreatureNum := 0 to (CreatureLen-1) do begin
       New(Creature[CreatureNum],Create());
       
       Creature[CreatureNum]^.C := Random() * Planet[1].Cmax;
-      Creature[CreatureNum]^.Speed := 150 + Random() * 300;
       
       Creature[CreatureNum]^.Order := CROR_WALK;
       Creature[CreatureNum]^.OrderTarget := Trunc(Random() * Planet[1].Cmax);
       
-      Creature[CreatureNum]^.Typ := CRTRIB_WORK;
+      Creature[CreatureNum]^.Typ := TCreatureType(Random(4));
+      Creature[CreatureNum]^.Anim := CRAN_STAND;
    end;
    CreatureNum := CreatureLen;
    

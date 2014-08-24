@@ -80,7 +80,7 @@ Function EntityInBox(Const en:PEntity;Const eW,eH,aX,aY,bX,bY:Double):Boolean;
 
 Procedure FinishProduction(Const Build:PBuilding);
 
-
+Function CDist(Const aC,bC:Double):Double;
 
 implementation
    uses Math;
@@ -215,9 +215,6 @@ Procedure FinishProduction(Const Build:PBuilding);
       Crea^.H := Build^.H;
       
       Crea^.HP := 100;
-      Crea^.MaxHP := 100;
-      
-      Crea^.Speed := 300 + Random() * 150;
       
       Crea^.Typ := Build^.Production.crType;
       Crea^.Team := Build^.Team;
@@ -268,6 +265,23 @@ Function EntityInBox(Const en:PEntity;Const eW,eH,aX,aY,bX,bY:Double):Boolean;
       If (eYb < aY) then Exit(False);
       
       Result := True
+   end;
+
+
+Function CDist(Const aC,bC:Double):Double;
+   Var distMin, distPlu : Double;
+   begin
+      If (bC > aC) then begin
+         distPlu := bC - aC;
+         distMin := Planet[1].Cmax - distPlu;
+      end else begin
+         distMin := aC - bC;
+         distPlu := Planet[1].Cmax - distMin;
+      end;
+      
+      If (distPlu < distMin)
+         then Result := distPlu
+         else Result := distMin
    end;
 
 
