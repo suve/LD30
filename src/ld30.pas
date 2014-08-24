@@ -157,6 +157,36 @@ Procedure CountFrames();
       Frames := 0
    end;
 
+Procedure LoadGfx();
+   Var CrTy : TCreatureType; BuTy : TBuildingType;
+       FilePath : AnsiString;
+   begin
+      FontA := Sour.LoadFont('gfx/font.png',$000000,7,9,#32);
+      Sour.SetFontSpacing(FontA,1,1);
+      
+      TechnoUI[UIS_CRYSTALS] := Sour.LoadImage('gfx/techno-crystal.png',$000000);
+      TechnoUI[UIS_TIMBER  ] := Sour.LoadImage('gfx/techno-timber.png',$000000);
+      TechnoUI[UIS_METAL   ] := Sour.LoadImage('gfx/techno-metal.png',$000000);
+      
+      TribalUI[UIS_CRYSTALS] := Sour.LoadImage('gfx/tribal-crystal.png',$000000);
+      TribalUI[UIS_TIMBER  ] := Sour.LoadImage('gfx/tribal-timber.png',$000000);
+      TribalUI[UIS_METAL   ] := Sour.LoadImage('gfx/tribal-metal.png',$000000);
+      
+      ResourceGfx := Sour.LoadImage('gfx/resources.png',$000000);
+      
+      For CrTy:=Low(CrTy) to High(CrTy) do begin
+         WriteStr(FilePath,CrTy);
+         FilePath := 'gfx/' + LowerCase(FilePath) + '.png';
+         CreatureGfx[CrTy] := Sour.LoadImage(FilePath,$000000)
+      end;
+      
+      For BuTy:=Low(BuTy) to High(BuTy) do begin
+         WriteStr(FilePath,BuTy);
+         FilePath := 'gfx/' + LowerCase(FilePath) + '.png';
+         BuildingGfx[BuTy] := Sour.LoadImage(FilePath,$000000)
+      end;
+   end;
+
 begin // MAIN
    Randomize();
    
@@ -171,16 +201,7 @@ begin // MAIN
    SDL_WM_SetCaption(PChar(GAME_NAME),PChar(GAME_NAME));
    Sour.SetClearColour(Sour.MakeColour(0,0,0));
    
-   FontA := Sour.LoadFont('gfx/font.png',$000000,7,9,#32);
-   Sour.SetFontSpacing(FontA,1,1);
-   
-   TechnoUI[UIS_CRYSTALS] := Sour.LoadImage('gfx/techno-crystal.png',$000000);
-   TechnoUI[UIS_TIMBER  ] := Sour.LoadImage('gfx/techno-timber.png',$000000);
-   TechnoUI[UIS_METAL   ] := Sour.LoadImage('gfx/techno-metal.png',$000000);
-   
-   TribalUI[UIS_CRYSTALS] := Sour.LoadImage('gfx/tribal-crystal.png',$000000);
-   TribalUI[UIS_TIMBER  ] := Sour.LoadImage('gfx/tribal-timber.png',$000000);
-   TribalUI[UIS_METAL   ] := Sour.LoadImage('gfx/tribal-metal.png',$000000);
+   LoadGfx();
    
    With Planet[0] do begin
       X := 2000; Y := 2000; R := 2000
@@ -192,21 +213,18 @@ begin // MAIN
    
    CalcPlanetZones();
    
-   Write('Resources ');
    ResourceLen := 20;
    SetLength(Resource, ResourceLen);
    For ResourceNum := 0 to (ResourceLen-1) do begin
       New(Resource[ResourceNum]);
       
       Resource[ResourceNum]^.Typ := TResourceType(Random(3));
-      Resource[ResourceNum]^.Amount := 100+Random(51);
+      Resource[ResourceNum]^.Amount := 40+Random(81);
       
       Resource[ResourceNum]^.C := Random() * Planet[1].Cmax
    end;
    ResourceNum := ResourceLen;
-   Writeln('done.');
    
-   Write('Creatures ');
    CreatureLen := 5;
    SetLength(Creature, CreatureLen);
    For CreatureNum := 0 to (CreatureLen-1) do begin
@@ -219,7 +237,6 @@ begin // MAIN
       Creature[CreatureNum]^.OrderTarget := Trunc(Random() * Planet[1].Cmax);
    end;
    CreatureNum := CreatureLen;
-   Writeln('done.');
    
    BuildingLen := 0;
    BuildingNum := 0;
@@ -232,7 +249,7 @@ begin // MAIN
       MoveCamera();
       
       CalculateBuildings();
-      CalculateCreatures();
+       CalculateCreatures();
       
       DrawFrame();
       CountFrames()

@@ -43,6 +43,10 @@ Var
    TechnoUI, TribalUI : Array[TUISprite] of Sour.PImage;
    Icon : PSDL_Surface;
    
+   ResourceGfx : Sour.PImage;
+   CreatureGfx : Array[TCreatureType] of Sour.PImage;
+   BuildingGfx : Array[TBuildingType] of Sour.PImage;
+   
    Ticks, Time : uInt;
    dT : Double;
    
@@ -62,6 +66,8 @@ Var
    SelType : TSelectionType;
    SelID : Array of uInt;
 
+
+Function GetAngle(Const Sin,Cos:Double):Double;
 Procedure CalcPlanetZones();
 
 Procedure CH_to_XYA(Const C,H:Double;Const Point:PPoint;Const Angle:PDouble);

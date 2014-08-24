@@ -89,20 +89,44 @@ Procedure DrawWood(Const Pt:PPoint;Const Ang:PDouble);
    end;
 
 Procedure DrawResources();
-   Var R : uInt; ResPt : TPoint; ResAng : Double;
+   Var R, v : uInt; ResPt : TPoint; ResAng,vDest,vAng : Double;
+       vS,vD:Array[0..4] of TPoint;
    begin
       If (ResourceNum <= 0) then Exit;
       
-      glBegin(GL_LINES);
+      Sour.TexEnable; Sour.TexBind(ResourceGfx^.Tex);
+      glBegin(GL_QUADS);
+      glColor4ub(255,255,255,255);
       For R := 0 to (ResourceLen - 1) do begin
          If (Resource[R] = NIL) then Continue;
          
          CH_to_XYA(Resource[R]^.C,0,@ResPt,@ResAng);
-         Case (Resource[R]^.Typ) of
-            RSRC_CRYSTAL: DrawCrystal(@ResPt,@ResAng);
-            RSRC_METAL: DrawMetal(@ResPt,@ResAng);
-            RSRC_WOOD: DrawWood(@ResPt,@ResAng);
-         end
+         
+         vS[1].X := Trunc(Resource[R]^.Amount / 50) * 15; vS[1].Y := Ord(Resource[R]^.Typ) * 21; 
+         vS[3].X := vS[1].X + 15; vS[3].Y := vS[1].Y + 21;
+         
+         vS[0].X := vS[3].X; vS[0].Y := vS[1].Y;
+         vS[2].X := vS[1].X; vS[2].Y := vS[3].Y;
+         
+         
+         
+         vD[0].X := +7.5 * 2; vD[0].Y := -21 * 2;
+         vD[1].X := -7.5 * 2; vD[1].Y := -21 * 2;
+         vD[2].X := -7.5 * 2; vD[2].Y :=   0 * 2;
+         vD[3].X := +7.5 * 2; vD[3].Y :=   0 * 2;
+         
+         ResAng += Pi/2;
+         For V:=0 to 3 do begin
+            //Write(Trunc(vS[v].X),':',Trunc(vS[v].Y),' - ');
+            
+            vDest := Sqrt(Sqr(vD[v].X) + Sqr(vD[v].Y));
+            vAng := GetAngle(vD[v].Y / vDest, vD[v].X / vDest);
+            
+            //glColor4ub(0,(V mod 2)*255,(V div 2)*255,255);
+            glTexCoord2f(vS[v].X / ResourceGfx^.TexW, vS[v].Y / ResourceGfx^.TexH);
+            glVertex2f(ResPt.X + vDest * Cos(ResAng + vAng), ResPt.Y + vDest * Sin(ResAng + vAng));
+         end;
+         //Writeln
       end;
       glEnd()
    end;
@@ -230,6 +254,23 @@ Procedure DrawUI_Tribal();
    end;
 
 
+Procedure DrawSelection();
+   Var Idx : sInt;
+   begin
+      If (SelType = SEL_CREAT) then begin
+         For Idx := Low(SelID) to High(SelID) do
+            If (Idx < CreatureLen) then
+               If (Creature[Idx] <> NIL) then
+                  
+      end else
+      If (SelType = SEL_BUILD) then begin
+         For Idx := Low(SelID) to High(SelID) do
+            If (Idx < BuildingLen) then
+               If (Building[Idx] <> NIL) then
+      end else
+   end;
+
+
 Procedure DrawFrame();
    begin
    Sour.BeginFrame();
@@ -244,6 +285,7 @@ Procedure DrawFrame();
       DrawPlanets();
       DrawResources();
       
+      Sour.TexDisable();
       DrawBuildings();
       DrawCreatures();
       

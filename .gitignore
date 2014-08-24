@@ -1,5 +1,6 @@
 *.[oa]
 *.ppu
 *.exe
+*.geany
 src/ld30
 ld30

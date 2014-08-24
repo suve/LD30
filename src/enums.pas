@@ -26,7 +26,7 @@ Type
       BUTYPE_LENGTH
    );
    
-   TResourceType = (RSRC_CRYSTAL, RSRC_METAL, RSRC_WOOD);
+   TResourceType = (RSRC_CRYSTAL, RSRC_TIMBER, RSRC_METAL);
    
    TDir = (DIR_UP, DIR_RIGHT, DIR_DOWN, DIR_LEFT);
    
