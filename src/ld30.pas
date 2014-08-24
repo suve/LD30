@@ -223,21 +223,21 @@ Procedure LoadGfx();
       FontA := Sour.LoadFont('gfx/font.png',$000000,7,9,#32);
       Sour.SetFontSpacing(FontA,1,1);
       
-      TechnoUI[UIS_CRYSTALS] := Sour.LoadImage('gfx/techno-crystal.png',$000000);
-      TechnoUI[UIS_TIMBER  ] := Sour.LoadImage('gfx/techno-timber.png',$000000);
-      TechnoUI[UIS_METAL   ] := Sour.LoadImage('gfx/techno-metal.png',$000000);
+      UIGfx[UI_TECHNO][UIS_CRYSTALS] := Sour.LoadImage('gfx/techno-crystal.png',$000000);
+      UIGfx[UI_TECHNO][UIS_TIMBER  ] := Sour.LoadImage('gfx/techno-timber.png',$000000);
+      UIGfx[UI_TECHNO][UIS_METAL   ] := Sour.LoadImage('gfx/techno-metal.png',$000000);
       
-      TechnoUI[UIS_SEL_L] := Sour.LoadImage('gfx/techno-sel-l.png',$000000);
-      TechnoUI[UIS_SEL_M] := Sour.LoadImage('gfx/techno-sel-m.png',$000000);
-      TechnoUI[UIS_SEL_R] := Sour.LoadImage('gfx/techno-sel-r.png',$000000);
+      UIGfx[UI_TECHNO][UIS_SEL_L] := Sour.LoadImage('gfx/techno-sel-l.png',$000000);
+      UIGfx[UI_TECHNO][UIS_SEL_M] := Sour.LoadImage('gfx/techno-sel-m.png',$000000);
+      UIGfx[UI_TECHNO][UIS_SEL_R] := Sour.LoadImage('gfx/techno-sel-r.png',$000000);
       
-      TribalUI[UIS_CRYSTALS] := Sour.LoadImage('gfx/tribal-crystal.png',$000000);
-      TribalUI[UIS_TIMBER  ] := Sour.LoadImage('gfx/tribal-timber.png',$000000);
-      TribalUI[UIS_METAL   ] := Sour.LoadImage('gfx/tribal-metal.png',$000000);
+      UIGfx[UI_TRIBAL][UIS_CRYSTALS] := Sour.LoadImage('gfx/tribal-crystal.png',$000000);
+      UIGfx[UI_TRIBAL][UIS_TIMBER  ] := Sour.LoadImage('gfx/tribal-timber.png',$000000);
+      UIGfx[UI_TRIBAL][UIS_METAL   ] := Sour.LoadImage('gfx/tribal-metal.png',$000000);
       
-      TribalUI[UIS_SEL_L] := Sour.LoadImage('gfx/tribal-sel-l.png',$000000);
-      TribalUI[UIS_SEL_M] := Sour.LoadImage('gfx/tribal-sel-m.png',$000000);
-      TribalUI[UIS_SEL_R] := Sour.LoadImage('gfx/tribal-sel-r.png',$000000);
+      UIGfx[UI_TRIBAL][UIS_SEL_L] := Sour.LoadImage('gfx/tribal-sel-l.png',$000000);
+      UIGfx[UI_TRIBAL][UIS_SEL_M] := Sour.LoadImage('gfx/tribal-sel-m.png',$000000);
+      UIGfx[UI_TRIBAL][UIS_SEL_R] := Sour.LoadImage('gfx/tribal-sel-r.png',$000000);
       
       ResourceGfx := Sour.LoadImage('gfx/resources.png',$000000);
       CreatureGfx := Sour.LoadImage('gfx/creatures.png',$000000);

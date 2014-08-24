@@ -41,7 +41,7 @@ Var
    Ev : TSDL_Event;
    
    FontA : Sour.PFont;
-   TechnoUI, TribalUI : Array[TUISprite] of Sour.PImage;
+   UIGfx : Array[TUIType, TUISprite] of Sour.PImage;
    Icon : PSDL_Surface;
    
    ResourceGfx, CreatureGfx, BuildingGfx : Sour.PImage;

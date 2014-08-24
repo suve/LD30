@@ -90,9 +90,10 @@ Procedure DrawWood(Const Pt:PPoint;Const Ang:PDouble);
 
 
 Procedure DrawSelBox(Const dX,dY,dW,dH,Rot:Double);
+   Const BoxSize = 7;
    Var v,vN : uInt; vDest,vAng : Double;
        vD:Array[0..4] of TPoint;
-       cX, cY : Double;
+       cX, cY, rNow, rChg: Double;
    begin
       vD[0].X := +dW / 2; vD[0].Y := -dH;
       vD[1].X := -dW / 2; vD[1].Y := -dH;
@@ -106,11 +107,14 @@ Procedure DrawSelBox(Const dX,dY,dW,dH,Rot:Double);
          cX := dX + vDest * Cos(Rot + vAng + Pi/2);
          cY := dY + vDest * Sin(Rot + vAng + Pi/2);
          
-         glVertex2f(cX,cY);
-         glVertex2f(cX + 3 * Cos(Rot + vAng), cY + 3 * Sin(Rot + vAng));
+         If (v mod 2 = 0) then rChg := +Pi / 2 else rChg := -Pi / 2;
+         If (v < 2) then rNow := Rot+Pi else rNow := Rot;
          
          glVertex2f(cX,cY);
-         glVertex2f(cX + 3 * Cos(Rot + vAng + Pi), cY + 3 * Sin(Rot + vAng + Pi));
+         glVertex2f(cX + BoxSize * Cos(rNow), cY + BoxSize * Sin(rNow));
+         
+         glVertex2f(cX,cY);
+         glVertex2f(cX + BoxSize * Cos(rNow + rChg), cY + BoxSize * Sin(rNow + rChg));
       end;
    end;
 
@@ -217,114 +221,96 @@ Procedure DrawCreatures();
    end;
 
 
-Procedure DrawUI_Techno();
-   Const UI_GAP = 10;
-   Var Crd:Sour.TCrd;
-   begin
-      Crd.X := Screen^.W - 1;
-      Crd.Y := UI_GAP;
-      
-      Crd.X -= UI_GAP + TechnoUI[UIS_METAL]^.W;
-      Sour.DrawImage(TechnoUI[UIS_METAL],NIL,@Crd);
-      Sour.PrintText(
-         '0',
-         FontA,
-         Crd.X + TechnoUI[UIS_METAL]^.W - 6,
-         Crd.Y + 6,
-         ALIGN_RIGHT
-         );
-      
-      Crd.X -= UI_GAP + TechnoUI[UIS_TIMBER]^.W;
-      Sour.DrawImage(TechnoUI[UIS_TIMBER],NIL,@Crd);
-      Sour.PrintText(
-         '0',
-         FontA,
-         Crd.X + TechnoUI[UIS_TIMBER]^.W - 6,
-         Crd.Y + 6,
-         ALIGN_RIGHT
-         );
-      
-      Crd.X -= UI_GAP + TechnoUI[UIS_CRYSTALS]^.W;
-      Sour.DrawImage(TechnoUI[UIS_CRYSTALS],NIL,@Crd);
-      Sour.PrintText(
-         '0',
-         FontA,
-         Crd.X + TechnoUI[UIS_CRYSTALS]^.W - 6,
-         Crd.Y + 6,
-         ALIGN_RIGHT
-         );
-   end;
-
-
-Procedure DrawUI_Tribal();
-   Const UI_GAP = 10;
-   Var Crd:Sour.TCrd;
-   begin
-      Crd.X := Screen^.W - 1;
-      Crd.Y := UI_GAP;
-      
-      Crd.X -= UI_GAP + TribalUI[UIS_METAL]^.W;
-      Sour.DrawImage(TribalUI[UIS_METAL],NIL,@Crd);
-      Sour.PrintText(
-         '0',
-         FontA,
-         Crd.X + TribalUI[UIS_METAL]^.W - 8,
-         Crd.Y + 6,
-         ALIGN_RIGHT
-         );
-      
-      Crd.X -= UI_GAP + TribalUI[UIS_TIMBER]^.W;
-      Sour.DrawImage(TribalUI[UIS_TIMBER],NIL,@Crd);
-      Sour.PrintText(
-         '0',
-         FontA,
-         Crd.X + TribalUI[UIS_TIMBER]^.W - 8,
-         Crd.Y + 6,
-         ALIGN_RIGHT
-         );
-      
-      Crd.X -= UI_GAP + TribalUI[UIS_CRYSTALS]^.W;
-      Sour.DrawImage(TribalUI[UIS_CRYSTALS],NIL,@Crd);
-      Sour.PrintText(
-         '0',
-         FontA,
-         Crd.X + TribalUI[UIS_CRYSTALS]^.W - 8,
-         Crd.Y + 6,
-         ALIGN_RIGHT
-         );
-   end;
-
-
 Procedure DrawSelection();
    Var
       Idx : sInt; pt : TPoint; rot : Double;
-      aX, aY, bX, bY : Double;
-      Rekt : Sour.TCrd;
    begin
       If (SelType = SEL_CREAT) then begin
+         Sour.TexDisable();
          glBegin(GL_LINES);
          glColor4ub(0,255,0,255);
          For Idx := 0 to (SelLen - 1) do
             If (SelID[Idx] > 0) and (SelID[Idx] < CreatureLen) then
                If (Creature[SelID[Idx]] <> NIL) then begin
                   CH_to_XYA(Creature[SelID[Idx]]^.C, 0, @pt, @rot);
-                  DrawSelBox(pt.X,pt.Y,15,21,Rot);
+                  DrawSelBox(pt.X,pt.Y,30,42,Rot);
                end;
          glEnd();
-         
+      end else
+      If (SelType = SEL_BUILD) then begin
+         Sour.TexDisable();
+         glBegin(GL_LINES);
+         glColor4ub(0,255,0,255);
+         For Idx := 0 to (SelLen - 1) do
+            If (SelID[Idx] > 0) and (SelID[Idx] < BuildingLen) then
+               If (Building[SelID[Idx]] <> NIL) then begin
+                  CH_to_XYA(Building[SelID[Idx]]^.C, 0, @pt, @rot);
+                  DrawSelBox(pt.X,pt.Y,30,42,Rot);
+               end;
+         glEnd();
+      end else
+   end;
+
+
+Procedure DrawUI_Windows(Const UIType:TUIType;Const UI_Space:uInt);
+   Const UI_GAP = 10;
+   Var Crd:Sour.TCrd;
+   begin
+      Crd.X := Screen^.W - 1;
+      Crd.Y := UI_GAP;
+      
+      Crd.X -= UI_GAP + UIGfx[UIType][UIS_METAL]^.W;
+      Sour.DrawImage(UIGfx[UIType][UIS_METAL],NIL,@Crd);
+      Sour.PrintText(
+         '0',
+         FontA,
+         Crd.X + UIGfx[UIType][UIS_METAL]^.W - UI_Space,
+         Crd.Y + 6,
+         ALIGN_RIGHT
+         );
+      
+      Crd.X -= UI_GAP + UIGfx[UIType][UIS_TIMBER]^.W;
+      Sour.DrawImage(UIGfx[UIType][UIS_TIMBER],NIL,@Crd);
+      Sour.PrintText(
+         '0',
+         FontA,
+         Crd.X + UIGfx[UIType][UIS_TIMBER]^.W - UI_Space,
+         Crd.Y + 6,
+         ALIGN_RIGHT
+         );
+      
+      Crd.X -= UI_GAP + UIGfx[UIType][UIS_CRYSTALS]^.W;
+      Sour.DrawImage(UIGfx[UIType][UIS_CRYSTALS],NIL,@Crd);
+      Sour.PrintText(
+         '0',
+         FontA,
+         Crd.X + UIGfx[UIType][UIS_CRYSTALS]^.W - UI_Space,
+         Crd.Y + 6,
+         ALIGN_RIGHT
+         );
+   end;
+
+
+Procedure DrawUI_Selection(Const UIType:TUIType;Const UI_Space:uInt);
+   Var
+      Idx : sInt; pt : TPoint; rot : Double;
+      aX, aY, bX, bY : Double;
+      Rekt : Sour.TCrd;
+   begin
+      If (SelType = SEL_CREAT) then begin
          Rekt.X := 3; Rekt.Y := 3;
-         Sour.DrawImage(TribalUI[UIS_SEL_L],NIL,@Rekt);
+         Sour.DrawImage(UIGfx[UIType][UIS_SEL_L],NIL,@Rekt);
          
-         Rekt.X += 7;
+         Rekt.X += UI_Space;
          For Idx := 0 to (SelLen - 1) do begin
-            Sour.DrawImage(TribalUI[UIS_SEL_M],NIL,@Rekt);
+            Sour.DrawImage(UIGfx[UIType][UIS_SEL_M],NIL,@Rekt);
             Rekt.X += 17;
          end;
          
-         Sour.DrawImage(TribalUI[UIS_SEL_R],NIL,@Rekt);
+         Sour.DrawImage(UIGfx[UIType][UIS_SEL_R],NIL,@Rekt);
          
          Sour.TexBind(CreatureGfx^.Tex);
-         Rekt.X := 11; Rekt.Y += 7;
+         Rekt.X := 3 + UI_Space + 1; Rekt.Y += 7;
          
          glBegin(GL_QUADS);
          For Idx := 0 to (SelLen - 1) do
@@ -369,6 +355,7 @@ Procedure DrawSelection();
          aY := (mSelY - Camera.Y) / CamScaleFactor;
          bX := mX; bY := mY;
          
+         Sour.TexDisable();
          glBegin(GL_QUADS);
             glColor4ub(0,255,0,64);
             glVertex2f(aX,aY);
@@ -385,6 +372,20 @@ Procedure DrawSelection();
             glVertex2f(bX,aY);
          glEnd();
       end
+   end;
+
+
+Procedure DrawUI_Techno();
+   begin
+      DrawUI_Windows(UI_TECHNO, 6);
+      DrawUI_Selection(UI_TECHNO, 5);
+   end;
+
+
+Procedure DrawUI_Tribal();
+   begin
+      DrawUI_Windows(UI_TRIBAL, 8);
+      DrawUI_Selection(UI_TRIBAL, 7);
    end;
 
 
@@ -405,10 +406,9 @@ Procedure DrawFrame();
       DrawBuildings();
       DrawCreatures();
       
-      Sour.SetVisibleArea(0, 0, Screen^.W, Screen^.H);
-      
-      Sour.TexDisable();
       DrawSelection();
+      
+      Sour.SetVisibleArea(0, 0, Screen^.W, Screen^.H);
       
       DrawUI_Tribal();
       Sour.PrintText(
