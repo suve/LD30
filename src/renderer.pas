@@ -153,6 +153,7 @@ Procedure DrawBuildings();
       glColor4ub(255,255,255,255);
       For B:=0 to (BuildingLen - 1) do begin
          If (Building[B] = NIL) then Continue;
+         If (Building[B]^.Team <> PlayerTeam) and (Not InSight(Building[B]^.C)) then Continue;
          
          CH_to_XYA(Building[B]^.C, 0, @buPt, @buAn);
          
@@ -183,6 +184,7 @@ Procedure DrawCreatures();
       glColor4ub(255,255,255,255);
       For C:=0 to (CreatureLen - 1) do begin
          If (Creature[C] = NIL) then Continue;
+         If (Creature[C]^.Team <> PlayerTeam) and (Not InSight(Creature[C]^.C)) then Continue;
          
          CH_to_XYA(Creature[C]^.C, 0, @crPt, @crAn);
          
@@ -223,7 +225,7 @@ Procedure DrawSelection();
             If (SelID[Idx] >= 0) and (SelID[Idx] < BuildingLen) then
                If (Building[SelID[Idx]] <> NIL) then begin
                   CH_to_XYA(Building[SelID[Idx]]^.C, 0, @pt, @rot);
-                  DrawSelBox(pt.X,pt.Y,30,42,Rot);
+                  DrawSelBox(pt.X,pt.Y,30*3,21*3,Rot);
                end;
          glEnd();
       end else
@@ -365,15 +367,43 @@ Procedure DrawUI_Selection(Const UIType:TUIType;Const UI_Space:uInt);
          
       end else
       If (SelType = SEL_BUILD) then begin
-         glBegin(GL_LINES);
-         glColor4ub(0,255,0,255);
+         Rekt.X := 10; Rekt.Y := 10;
+         Sour.DrawImage(UIGfx[UIType][UIS_SEL_L],NIL,@Rekt);
+         
+         Rekt.X += UI_Space;
+         For Idx := 0 to (SelLen - 1) do begin
+            Sour.DrawImage(UIGfx[UIType][UIS_SEL_M],NIL,@Rekt);
+            Rekt.X += 17;
+            Sour.DrawImage(UIGfx[UIType][UIS_SEL_M],NIL,@Rekt);
+            Rekt.X += 17;
+         end;
+         
+         Sour.DrawImage(UIGfx[UIType][UIS_SEL_R],NIL,@Rekt);
+         
+         Sour.TexBind(BuildingGfx^.Tex);
+         Rekt.X := 10 + UI_Space + 2; Rekt.Y += 7;
+         
+         glBegin(GL_QUADS);
          For Idx := 0 to (SelLen - 1) do
             If (SelID[Idx] >= 0) and (SelID[Idx] < BuildingLen) then
                If (Building[SelID[Idx]] <> NIL) then begin
-                  CH_to_XYA(Building[SelID[Idx]]^.C, 0, @pt, @rot);
-                  DrawSelBox(pt.X,pt.Y,30,42,Rot);
+                  
+                  aX := 0;
+                  aY := Ord(Building[SelID[Idx]]^.Typ) * 21;
+                  bX := aX + 30; bY := aY + 21;
+                  
+                  aX /= BuildingGfx^.TexW; bX /= BuildingGfx^.TexW;
+                  aY /= BuildingGfx^.TexH; bY /= BuildingGfx^.TexH;
+                  
+                  glTexCoord2f(aX,aY); glVertex2f(Rekt.X   ,Rekt.Y   );
+                  glTexCoord2f(aX,bY); glVertex2f(Rekt.X   ,Rekt.Y+21);
+                  glTexCoord2f(bX,bY); glVertex2f(Rekt.X+30,Rekt.Y+21);
+                  glTexCoord2f(bX,aY); glVertex2f(Rekt.X+30,Rekt.Y   );
+                  
+                  Rekt.X += 34
                end;
-         glEnd();
+         glEnd()
+         
       end else
       If (SelType = SEL_MAKING) then begin
          aX := (mSelX - Camera.X) / CamScaleFactor;
@@ -436,8 +466,10 @@ Procedure DrawFrame();
       
       Sour.SetVisibleArea(0, 0, Screen^.W, Screen^.H);
       
-      DrawUI_Techno();
-      //DrawUI_Tribal();
+      If (PlayerTeam = 0)
+         then DrawUI_Techno()
+         else DrawUI_Tribal();
+      
       Sour.PrintText(
          [
             FrameStr,

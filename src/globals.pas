@@ -18,7 +18,6 @@ Const
    SDL_TICKS_PER_SECOND = 1000;
    PLANET_GRANULARITY = 10;
    CAMERA_SPEED = 500;
-   PlayerTeam = 0;
    
    ARRAY_RESIZE_STEP = 8;
    SEL_MAX = 30;
@@ -60,6 +59,7 @@ Var
    FrameStr : AnsiString = 'FPS: ???';
    
    Planet : Array[0..1] of TPlanet;
+   PlayerTeam : uInt = 0;
    
    SightZone : Array of TSightZone;
    SightZoneNum, SightZoneLen : sInt;

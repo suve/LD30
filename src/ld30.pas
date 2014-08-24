@@ -146,6 +146,13 @@ Procedure IssueOrder();
    end;
 
 
+Procedure ChangeTeam(Const NewTeam : uInt);
+   begin
+      If (SelType >= SEL_CREAT) then SelType := SEL_NONE;
+      PlayerTeam := NewTeam
+   end;
+
+
 Procedure ProcessEvents();
    begin
       While (SDL_PollEvent(@Ev) > 0) do
@@ -158,6 +165,9 @@ Procedure ProcessEvents();
                   SDLK_ESCAPE: Terminate := True;
                   SDLK_MINUS: CameraZoom(-1, ZOOM_KEYBOARD);
                   SDLK_EQUALS: CameraZoom(+1, ZOOM_KEYBOARD);
+                  
+                  SDLK_1: ChangeTeam(0);
+                  SDLK_2: ChangeTeam(1);
                   
                   SDLK_UP: CamMove[DIR_UP] := True;
                   SDLK_RI: CamMove[DIR_RI] := True;
@@ -335,7 +345,7 @@ begin // MAIN
       Building[BuildingNum]^.C := Random() * Planet[1].Cmax;
       Building[BuildingNum]^.Typ := TBuildingType(2 * BuildingNum);
       
-      Building[BuildingNum]^.Team := PlayerTeam;
+      Building[BuildingNum]^.Team := BuildingNum;
       Building[BuildingNum]^.SightRange := 222
    end;
    BuildingNum := BuildingLen;
@@ -353,7 +363,9 @@ begin // MAIN
       Creature[CreatureNum]^.Typ := TCreatureType(Random(7));
       Creature[CreatureNum]^.Anim := CRAN_STAND;
       
-      Creature[CreatureNum]^.Team := PlayerTeam;
+      If (Creature[CreatureNum]^.Typ < CRTRIB_WORK)
+         then Creature[CreatureNum]^.Team := 0
+         else Creature[CreatureNum]^.Team := 1;
       Creature[CreatureNum]^.SightRange := CreatureStats[Creature[CreatureNum]^.Typ].Speed / 1.5;
    end;
    CreatureNum := CreatureLen;
