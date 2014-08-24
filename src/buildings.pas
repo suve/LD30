@@ -3,7 +3,7 @@ unit buildings;
 {$INCLUDE defines.inc}
 
 interface
-   uses Enums;
+   uses Enums, Entities;
 
 Type
    TProduction = record
@@ -15,19 +15,16 @@ Type
    end;
    
    PBuilding = ^TBuilding;
-   TBuilding = object
-      C, H : Double;
+   TBuilding = object(TEntity)
       
       Finished : Double;
-      HP, MaxHP : Double;
       
       Production : TProduction;
-      Team : uInt;
       
-      Procedure Calculate();
+      Procedure Calculate(); Virtual;
       
       Constructor Create();
-      Destructor Destroy();
+      Destructor Destroy(); Virtual;
    end;
 
 Var

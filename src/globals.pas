@@ -5,13 +5,13 @@ unit globals;
 interface
    uses
       SDL, Sour, Enums,
-      Buildings, Creatures
+      Entities, Buildings, Creatures
       ;
 
 Const
    GAME_NAME = 'TechnoTumor';
    GAME_VMAJOR = 0;
-   GAME_VMINOR = 2;
+   GAME_VMINOR = 3;
    GAME_VBUGFX = 0;
    GAME_VERSION = Chr(48+GAME_VMAJOR) + '.' + Chr(48+GAME_VMINOR) + '.' + Chr(48+GAME_VBUGFX);
 
@@ -20,6 +20,7 @@ Const
    CAMERA_SPEED = 500;
    
    ARRAY_RESIZE_STEP = 8;
+   SEL_MAX = 30;
 
 Type
    PPoint = ^TPoint;
@@ -43,9 +44,7 @@ Var
    TechnoUI, TribalUI : Array[TUISprite] of Sour.PImage;
    Icon : PSDL_Surface;
    
-   ResourceGfx : Sour.PImage;
-   CreatureGfx : Array[TCreatureType] of Sour.PImage;
-   BuildingGfx : Array[TBuildingType] of Sour.PImage;
+   ResourceGfx, CreatureGfx, BuildingGfx : Sour.PImage;
    
    Ticks, Time : uInt;
    dT : Double;
@@ -55,7 +54,9 @@ Var
    FrameStr : AnsiString = 'FPS: ???';
    
    Planet : Array[0..1] of TPlanet;
+   
    mX, mY : sInt;
+   mSelX, mSelY : sInt;
    
    Camera : TPoint = (X:0.0; Y:0.0);
    CamMove : Array[TDir] of Boolean = (False,False,False,False);
@@ -64,7 +65,8 @@ Var
    CamScaleFactor : Double = 1;
 
    SelType : TSelectionType;
-   SelID : Array of uInt;
+   SelID : Array[0..SEL_MAX-1] of sInt;
+   SelLen : uInt;
 
 
 Function GetAngle(Const Sin,Cos:Double):Double;
@@ -74,6 +76,7 @@ Procedure CH_to_XYA(Const C,H:Double;Const Point:PPoint;Const Angle:PDouble);
 Procedure CH_to_XY(Const C,H:Double;Const Point:PPoint);
 Function CH_to_XY(Const C,H:Double):TPoint;
 
+Function EntityInBox(Const en:PEntity;Const eW,eH,aX,aY,bX,bY:Double):Boolean;
 
 Procedure FinishProduction(Const Build:PBuilding);
 
@@ -225,6 +228,46 @@ Procedure FinishProduction(Const Build:PBuilding);
       
       Build^.Production.Active := False;
       Build^.Production.Progress := 0.0
+   end;
+
+
+Function EntityInBox(Const en:PEntity;Const eW,eH,aX,aY,bX,bY:Double):Boolean;
+   Var
+      enPt : TPoint; enAn : Double;
+      eV : Array[0..3] of TPoint;
+      v : sInt; vAng, vDist : Double;
+      eXa, eYa, eXb, eYb : Double;
+   begin
+      CH_to_XYA(en^.C, 0, @enPt, @enAn);
+      
+      eV[0].X := +eW / 2; eV[0].Y := -eH;
+      eV[1].X := -eW / 2; eV[1].Y := -eH;
+      eV[2].X := -eW / 2; eV[2].Y :=   0;
+      eV[3].X := +eW / 2; eV[3].Y :=   0;
+      
+      eXa := +1000000; eYa := +1000000;
+      eXb := -1000000; eYb := -1000000;
+      
+      For V:=0 to 3 do begin
+         vDist := Sqrt(Sqr(eV[v].X) + Sqr(eV[v].Y));
+         vAng := GetAngle(eV[v].Y / vDist, eV[v].X / vDist);
+         
+         eV[v].X := enPt.X + vDist * Cos(enAn + vAng + Pi/2);
+         eV[v].Y := enPt.Y + vDist * Sin(enAn + vAng + Pi/2);
+         
+         If (eV[v].X < eXa) then eXa := eV[v].X;
+         If (eV[v].X > eXb) then eXb := eV[v].X;
+         
+         If (eV[v].Y < eYa) then eYa := eV[v].Y;
+         If (eV[v].Y > eYb) then eYb := eV[v].Y;
+      end;
+      
+      If (eXa > bX) then Exit(False);
+      If (eYa > bY) then Exit(False);
+      If (eXb < aX) then Exit(False);
+      If (eYb < aY) then Exit(False);
+      
+      Result := True
    end;
 
 

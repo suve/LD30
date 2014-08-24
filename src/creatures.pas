@@ -3,18 +3,15 @@ unit creatures;
 {$INCLUDE defines.inc}
 
 interface
-   uses Enums;
+   uses Enums, Entities;
 
 Type
    PCreature = ^TCreature;
-   TCreature = object
-      C, H : Double;
+   TCreature = object(TEntity)
       
-      HP, MaxHP : Double;
       Speed : Double;
       
       Typ : TCreatureType;
-      Team : uInt;
       
       IntoCrystal, IntoMetal, IntoWood : Boolean;
       IntoBuild, IntoRepair : Boolean;
@@ -25,10 +22,10 @@ Type
       // Function X():Double;
       // Function Y():Double;
       
-      Procedure Calculate();
+      Procedure Calculate(); Virtual;
       
       Constructor Create();
-      Destructor Destroy();
+      Destructor Destroy(); Virtual;
    end;
 
 Var

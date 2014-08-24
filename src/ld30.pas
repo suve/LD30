@@ -57,6 +57,50 @@ Procedure CameraZoom(Const Change:sInt;Const Mouse:Boolean);
       CamScale := NewScale
    end;
 
+Procedure MakeSelection();
+   Var 
+      Idx : sInt;
+      aX, aY, bX, bY, T : Double;
+   begin
+      aX := mSelX;
+      aY := mSelY;
+      
+      bX := Camera.X + mX * CamScaleFactor;
+      bY := Camera.Y + mY * CamScaleFactor;
+      
+      If (bX < aX) then begin T := aX; aX := bX; bX := T end;
+      If (bY < aY) then begin T := aY; aY := bY; bY := T end;
+      
+      SelLen := 0;
+      If (CreatureNum > 0) then begin
+         For Idx := 0 to (CreatureLen - 1) do
+            If (Creature[Idx] <> NIL) then
+               If (EntityInBox(Creature[Idx],15,21,aX,aY,bX,bY)) then begin
+                  SelID[selLen] := Idx;
+                  selLen += 1;
+                  If (selLen = SEL_MAX) then Break;
+               end;
+         If (selLen > 0) then begin
+            SelType := SEL_CREAT;
+            Exit()
+         end;
+      end;
+      If (BuildingNum > 0) then begin
+         For Idx := 0 to (BuildingLen - 1) do
+            If (Building[Idx] <> NIL) then
+               If (EntityInBox(Building[Idx],30,42,aX,aY,bX,bY)) then begin
+                  SelID[selLen] := Idx;
+                  selLen += 1;
+                  If (selLen = SEL_MAX) then Break;
+               end;
+         If (selLen > 0) then begin
+            SelType := SEL_BUILD;
+            Exit()
+         end;
+      end;
+      SelType := SEL_NONE
+   end;
+
 Procedure ProcessEvents();
    begin
       While (SDL_PollEvent(@Ev) > 0) do
@@ -94,8 +138,23 @@ Procedure ProcessEvents();
                mY := Ev.Button.Y;
                
                Case (Ev.Button.Button) of
+                  SDL_BUTTON_LEFT: begin
+                     SelType := SEL_MAKING;
+                     mSelX := Trunc(Camera.X + mX * CamScaleFactor);
+                     mSelY := Trunc(Camera.Y + mY * CamScaleFactor);
+                  end;
+                  
                   SDL_BUTTON_WHEELDOWN: CameraZoom(-1, ZOOM_MOUSE);
                   SDL_BUTTON_WHEELUP: CameraZoom(+1, ZOOM_MOUSE);
+               end;
+            end;
+            
+            SDL_MouseButtonUp: begin
+               mX := Ev.Button.X;
+               mY := Ev.Button.Y;
+               
+               Case (Ev.Button.Button) of
+                  SDL_BUTTON_LEFT: MakeSelection();
                end;
             end;
             
@@ -168,23 +227,21 @@ Procedure LoadGfx();
       TechnoUI[UIS_TIMBER  ] := Sour.LoadImage('gfx/techno-timber.png',$000000);
       TechnoUI[UIS_METAL   ] := Sour.LoadImage('gfx/techno-metal.png',$000000);
       
+      TechnoUI[UIS_SEL_L] := Sour.LoadImage('gfx/techno-sel-l.png',$000000);
+      TechnoUI[UIS_SEL_M] := Sour.LoadImage('gfx/techno-sel-m.png',$000000);
+      TechnoUI[UIS_SEL_R] := Sour.LoadImage('gfx/techno-sel-r.png',$000000);
+      
       TribalUI[UIS_CRYSTALS] := Sour.LoadImage('gfx/tribal-crystal.png',$000000);
       TribalUI[UIS_TIMBER  ] := Sour.LoadImage('gfx/tribal-timber.png',$000000);
       TribalUI[UIS_METAL   ] := Sour.LoadImage('gfx/tribal-metal.png',$000000);
       
+      TribalUI[UIS_SEL_L] := Sour.LoadImage('gfx/tribal-sel-l.png',$000000);
+      TribalUI[UIS_SEL_M] := Sour.LoadImage('gfx/tribal-sel-m.png',$000000);
+      TribalUI[UIS_SEL_R] := Sour.LoadImage('gfx/tribal-sel-r.png',$000000);
+      
       ResourceGfx := Sour.LoadImage('gfx/resources.png',$000000);
-      
-      For CrTy:=Low(CrTy) to High(CrTy) do begin
-         WriteStr(FilePath,CrTy);
-         FilePath := 'gfx/' + LowerCase(FilePath) + '.png';
-         CreatureGfx[CrTy] := Sour.LoadImage(FilePath,$000000)
-      end;
-      
-      For BuTy:=Low(BuTy) to High(BuTy) do begin
-         WriteStr(FilePath,BuTy);
-         FilePath := 'gfx/' + LowerCase(FilePath) + '.png';
-         BuildingGfx[BuTy] := Sour.LoadImage(FilePath,$000000)
-      end;
+      CreatureGfx := Sour.LoadImage('gfx/creatures.png',$000000);
+      BuildingGfx := Sour.LoadImage('gfx/buildings.png',$000000);
    end;
 
 begin // MAIN
@@ -235,11 +292,14 @@ begin // MAIN
       
       Creature[CreatureNum]^.Order := CROR_WALK;
       Creature[CreatureNum]^.OrderTarget := Trunc(Random() * Planet[1].Cmax);
+      
+      Creature[CreatureNum]^.Typ := CRTRIB_WORK;
    end;
    CreatureNum := CreatureLen;
    
    BuildingLen := 0;
    BuildingNum := 0;
+   SelType := SEL_NONE;
    
    Repeat
       
@@ -249,7 +309,7 @@ begin // MAIN
       MoveCamera();
       
       CalculateBuildings();
-       CalculateCreatures();
+      CalculateCreatures();
       
       DrawFrame();
       CountFrames()

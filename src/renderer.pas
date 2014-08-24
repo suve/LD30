@@ -88,9 +88,60 @@ Procedure DrawWood(Const Pt:PPoint;Const Ang:PDouble);
       glVertex2f(Pt^.X + 6 * Cos(Ang^ + Pi/2), Pt^.Y + 6 * Sin(Ang^ + Pi/2));
    end;
 
-Procedure DrawResources();
-   Var R, v : uInt; ResPt : TPoint; ResAng,vDest,vAng : Double;
+
+Procedure DrawSelBox(Const dX,dY,dW,dH,Rot:Double);
+   Var v,vN : uInt; vDest,vAng : Double;
+       vD:Array[0..4] of TPoint;
+       cX, cY : Double;
+   begin
+      vD[0].X := +dW / 2; vD[0].Y := -dH;
+      vD[1].X := -dW / 2; vD[1].Y := -dH;
+      vD[2].X := -dW / 2; vD[2].Y :=   0;
+      vD[3].X := +dW / 2; vD[3].Y :=   0;
+      
+      For V:=0 to 3 do begin
+         vDest := Sqrt(Sqr(vD[v].X) + Sqr(vD[v].Y));
+         vAng := GetAngle(vD[v].Y / vDest, vD[v].X / vDest);
+         
+         cX := dX + vDest * Cos(Rot + vAng + Pi/2);
+         cY := dY + vDest * Sin(Rot + vAng + Pi/2);
+         
+         glVertex2f(cX,cY);
+         glVertex2f(cX + 3 * Cos(Rot + vAng), cY + 3 * Sin(Rot + vAng));
+         
+         glVertex2f(cX,cY);
+         glVertex2f(cX + 3 * Cos(Rot + vAng + Pi), cY + 3 * Sin(Rot + vAng + Pi));
+      end;
+   end;
+
+
+Procedure DrawSprite(Const Tex:Sour.PImage;Const sX,sY,sW,sH,dX,dY,dW,dH,Rot:Double);
+   Var v : uInt; vDest,vAng : Double;
        vS,vD:Array[0..4] of TPoint;
+   begin
+      vS[1].X := sX; vS[1].Y := sY; 
+      vS[3].X := sX + sW; vS[3].Y := sY + sH;
+      
+      vS[0].X := vS[3].X; vS[0].Y := vS[1].Y;
+      vS[2].X := vS[1].X; vS[2].Y := vS[3].Y;
+      
+      vD[0].X := +dW / 2; vD[0].Y := -dH;
+      vD[1].X := -dW / 2; vD[1].Y := -dH;
+      vD[2].X := -dW / 2; vD[2].Y :=   0;
+      vD[3].X := +dW / 2; vD[3].Y :=   0;
+      
+      For V:=0 to 3 do begin
+         vDest := Sqrt(Sqr(vD[v].X) + Sqr(vD[v].Y));
+         vAng := GetAngle(vD[v].Y / vDest, vD[v].X / vDest);
+         
+         glTexCoord2f(vS[v].X / Tex^.TexW, vS[v].Y / Tex^.TexH);
+         glVertex2f(dX + vDest * Cos(Rot + vAng + Pi/2), dY + vDest * Sin(Rot + vAng + Pi/2));
+      end;
+   end;
+
+
+Procedure DrawResources();
+   Var R : uInt; ResPt : TPoint; ResAng : Double;
    begin
       If (ResourceNum <= 0) then Exit;
       
@@ -102,31 +153,13 @@ Procedure DrawResources();
          
          CH_to_XYA(Resource[R]^.C,0,@ResPt,@ResAng);
          
-         vS[1].X := Trunc(Resource[R]^.Amount / 50) * 15; vS[1].Y := Ord(Resource[R]^.Typ) * 21; 
-         vS[3].X := vS[1].X + 15; vS[3].Y := vS[1].Y + 21;
-         
-         vS[0].X := vS[3].X; vS[0].Y := vS[1].Y;
-         vS[2].X := vS[1].X; vS[2].Y := vS[3].Y;
-         
-         
-         
-         vD[0].X := +7.5 * 2; vD[0].Y := -21 * 2;
-         vD[1].X := -7.5 * 2; vD[1].Y := -21 * 2;
-         vD[2].X := -7.5 * 2; vD[2].Y :=   0 * 2;
-         vD[3].X := +7.5 * 2; vD[3].Y :=   0 * 2;
-         
-         ResAng += Pi/2;
-         For V:=0 to 3 do begin
-            //Write(Trunc(vS[v].X),':',Trunc(vS[v].Y),' - ');
-            
-            vDest := Sqrt(Sqr(vD[v].X) + Sqr(vD[v].Y));
-            vAng := GetAngle(vD[v].Y / vDest, vD[v].X / vDest);
-            
-            //glColor4ub(0,(V mod 2)*255,(V div 2)*255,255);
-            glTexCoord2f(vS[v].X / ResourceGfx^.TexW, vS[v].Y / ResourceGfx^.TexH);
-            glVertex2f(ResPt.X + vDest * Cos(ResAng + vAng), ResPt.Y + vDest * Sin(ResAng + vAng));
-         end;
-         //Writeln
+         DrawSprite(ResourceGfx,
+            Trunc(Resource[R]^.Amount / 50) * 15, Ord(Resource[R]^.Typ) * 21,
+            15, 21,
+            ResPt.X, ResPt.Y,
+            15 * 3, 21 * 3,
+            ResAng
+            ); 
       end;
       glEnd()
    end;
@@ -154,23 +187,31 @@ Procedure DrawBuildings();
    end;
 
 
+Function Fork(Const Condition:Boolean;Const TrueVal,FalseVal : sInt):sInt; Inline;
+   begin If(Condition) then Result := TrueVal else Result := FalseVal end;
+
+
 Procedure DrawCreatures();
-   const SIZE = 12;
    Var C:uInt; crPt : TPoint; crAn : Double;
    begin
       If (CreatureNum <= 0) then Exit;
       
+      Sour.TexEnable; Sour.TexBind(CreatureGfx^.Tex);
       glBegin(GL_QUADS);
-      glColor4ub(255,0,0,255);
+      glColor4ub(255,255,255,255);
       For C:=0 to (CreatureLen - 1) do begin
          If (Creature[C] = NIL) then Continue;
          
          CH_to_XYA(Creature[C]^.C, 0, @crPt, @crAn);
          
-         glVertex2f(crPt.X - SIZE * Cos(crAn + 1*Pi/4), crPt.Y - SIZE * Sin(crAn + 1*Pi/4));
-         glVertex2f(crPt.X - SIZE * Cos(crAn + 3*Pi/4), crPt.Y - SIZE * Sin(crAn + 3*Pi/4));
-         glVertex2f(crPt.X - SIZE * Cos(crAn + 5*Pi/4), crPt.Y - SIZE * Sin(crAn + 5*Pi/4));
-         glVertex2f(crPt.X - SIZE * Cos(crAn + 7*Pi/4), crPt.Y - SIZE * Sin(crAn + 7*Pi/4));
+         DrawSprite(CreatureGfx,
+            Fork(Creature[C]^.Typ >= CRTRIB_WORK, 45, 0),
+            Fork(Creature[C]^.Typ >= CRTRIB_WORK, Ord(Creature[C]^.Typ) - Ord(CRTRIB_WORK), Ord(Creature[C]^.Typ))*21,
+            15, 21,
+            crPt.X, crPt.Y,
+            15 * 2, 21 * 2,
+            crAn
+            ); 
       end;
       glEnd();
    end;
@@ -255,19 +296,95 @@ Procedure DrawUI_Tribal();
 
 
 Procedure DrawSelection();
-   Var Idx : sInt;
+   Var
+      Idx : sInt; pt : TPoint; rot : Double;
+      aX, aY, bX, bY : Double;
+      Rekt : Sour.TCrd;
    begin
       If (SelType = SEL_CREAT) then begin
-         For Idx := Low(SelID) to High(SelID) do
-            If (Idx < CreatureLen) then
-               If (Creature[Idx] <> NIL) then
+         glBegin(GL_LINES);
+         glColor4ub(0,255,0,255);
+         For Idx := 0 to (SelLen - 1) do
+            If (SelID[Idx] > 0) and (SelID[Idx] < CreatureLen) then
+               If (Creature[SelID[Idx]] <> NIL) then begin
+                  CH_to_XYA(Creature[SelID[Idx]]^.C, 0, @pt, @rot);
+                  DrawSelBox(pt.X,pt.Y,15,21,Rot);
+               end;
+         glEnd();
+         
+         Rekt.X := 3; Rekt.Y := 3;
+         Sour.DrawImage(TribalUI[UIS_SEL_L],NIL,@Rekt);
+         
+         Rekt.X += 7;
+         For Idx := 0 to (SelLen - 1) do begin
+            Sour.DrawImage(TribalUI[UIS_SEL_M],NIL,@Rekt);
+            Rekt.X += 17;
+         end;
+         
+         Sour.DrawImage(TribalUI[UIS_SEL_R],NIL,@Rekt);
+         
+         Sour.TexBind(CreatureGfx^.Tex);
+         Rekt.X := 11; Rekt.Y += 7;
+         
+         glBegin(GL_QUADS);
+         For Idx := 0 to (SelLen - 1) do
+            If (SelID[Idx] > 0) and (SelID[Idx] < CreatureLen) then
+               If (Creature[SelID[Idx]] <> NIL) then begin
                   
+                  If (Creature[SelID[Idx]]^.Typ >= CRTRIB_WORK) then begin
+                     aX := 45 + 15;
+                     aY := (Ord(Creature[SelID[Idx]]^.Typ) - Ord(CRTRIB_WORK)) * 21;
+                  end else begin
+                     aX := 0 + 15;
+                     aY := Ord(Creature[SelID[Idx]]^.Typ) * 21;
+                  end;
+                  bX := aX + 15; bY := aY + 21;
+                  
+                  aX /= CreatureGfx^.TexW; bX /= CreatureGfx^.TexW;
+                  aY /= CreatureGfx^.TexH; bY /= CreatureGfx^.TexH;
+                  
+                  glTexCoord2f(aX,aY); glVertex2f(Rekt.X   ,Rekt.Y   );
+                  glTexCoord2f(aX,bY); glVertex2f(Rekt.X   ,Rekt.Y+21);
+                  glTexCoord2f(bX,bY); glVertex2f(Rekt.X+15,Rekt.Y+21);
+                  glTexCoord2f(bX,aY); glVertex2f(Rekt.X+15,Rekt.Y   );
+                  
+                  Rekt.X += 17
+               end;
+         glEnd()
+         
       end else
       If (SelType = SEL_BUILD) then begin
-         For Idx := Low(SelID) to High(SelID) do
-            If (Idx < BuildingLen) then
-               If (Building[Idx] <> NIL) then
+         glBegin(GL_LINES);
+         glColor4ub(0,255,0,255);
+         For Idx := 0 to (SelLen - 1) do
+            If (SelID[Idx] > 0) and (SelID[Idx] < BuildingLen) then
+               If (Building[SelID[Idx]] <> NIL) then begin
+                  CH_to_XYA(Building[SelID[Idx]]^.C, 0, @pt, @rot);
+                  DrawSelBox(pt.X,pt.Y,30,42,Rot);
+               end;
+         glEnd();
       end else
+      If (SelType = SEL_MAKING) then begin
+         aX := (mSelX - Camera.X) / CamScaleFactor;
+         aY := (mSelY - Camera.Y) / CamScaleFactor;
+         bX := mX; bY := mY;
+         
+         glBegin(GL_QUADS);
+            glColor4ub(0,255,0,64);
+            glVertex2f(aX,aY);
+            glVertex2f(aX,bY);
+            glVertex2f(bX,bY);
+            glVertex2f(bX,aY);
+         glEnd();
+         
+         glBegin(GL_LINE_LOOP);
+            glColor4ub(0,255,0,255);
+            glVertex2f(aX,aY);
+            glVertex2f(aX,bY);
+            glVertex2f(bX,bY);
+            glVertex2f(bX,aY);
+         glEnd();
+      end
    end;
 
 
@@ -283,21 +400,23 @@ Procedure DrawFrame();
       );
       
       DrawPlanets();
-      DrawResources();
       
-      Sour.TexDisable();
+      DrawResources();
       DrawBuildings();
       DrawCreatures();
       
       Sour.SetVisibleArea(0, 0, Screen^.W, Screen^.H);
       
+      Sour.TexDisable();
+      DrawSelection();
+      
       DrawUI_Tribal();
       Sour.PrintText(
          [
-            UpperCase(GAME_NAME) + ' V.' + GAME_VERSION,
-            FrameStr
+            FrameStr,
+            UpperCase(GAME_NAME) + ' V.' + GAME_VERSION
          ],
-         FontA,3,3);
+         FontA,3,Screen^.H - 3, ALIGN_BOTTOM);
       
    Sour.FinishFrame();
    end;
