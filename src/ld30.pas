@@ -74,7 +74,7 @@ Procedure MakeSelection();
       SelLen := 0;
       If (CreatureNum > 0) then begin
          For Idx := 0 to (CreatureLen - 1) do
-            If (Creature[Idx] <> NIL) then
+            If (Creature[Idx] <> NIL) and (Creature[Idx]^.Team = PlayerTeam) then
                If (EntityInBox(Creature[Idx],15,21,aX,aY,bX,bY)) then begin
                   SelID[selLen] := Idx;
                   selLen += 1;
@@ -87,7 +87,7 @@ Procedure MakeSelection();
       end;
       If (BuildingNum > 0) then begin
          For Idx := 0 to (BuildingLen - 1) do
-            If (Building[Idx] <> NIL) then
+            If (Building[Idx] <> NIL) and (Building[Idx]^.Team = PlayerTeam)  then
                If (EntityInBox(Building[Idx],30,42,aX,aY,bX,bY)) then begin
                   SelID[selLen] := Idx;
                   selLen += 1;
@@ -337,8 +337,10 @@ begin // MAIN
       Creature[CreatureNum]^.Order := CROR_WALK;
       Creature[CreatureNum]^.OrderTarget := Trunc(Random() * Planet[1].Cmax);
       
-      Creature[CreatureNum]^.Typ := TCreatureType(Random(4));
+      Creature[CreatureNum]^.Typ := TCreatureType(Random(7));
       Creature[CreatureNum]^.Anim := CRAN_STAND;
+      
+      Creature[CreatureNum]^.SightRange := 369;
    end;
    CreatureNum := CreatureLen;
    
@@ -355,6 +357,7 @@ begin // MAIN
       
       CalculateBuildings();
       CalculateCreatures();
+      CalcSightZones();
       
       DrawFrame();
       CountFrames()

@@ -16,10 +16,12 @@ Type
 Const
    CreatureStats : Array[TCreatureType] of TCreatureStats = (
       (W: 15; H: 21; MaxHP: 120; Speed: 180; Collect: 12; Build: True),
-      (W: 15; H: 21; MaxHP: 150; Speed: 360; Collect: 0; Build: False),
-      (W: 15; H: 21; MaxHP: 250; Speed: 250; Collect: 0; Build: False),
-      (W: 15; H: 21; MaxHP: 170; Speed: 285; Collect: 0; Build: False),
+      (W: 15; H: 21; MaxHP: 150; Speed: 360; Collect:  0; Build: False),
+      (W: 15; H: 21; MaxHP: 250; Speed: 250; Collect:  0; Build: False),
+      (W: 15; H: 21; MaxHP: 170; Speed: 285; Collect:  0; Build: False),
       (W: 15; H: 21; MaxHP:  90; Speed: 170; Collect: 10; Build: True),
+      (W: 15; H: 21; MaxHP: 100; Speed: 270; Collect:  0; Build: False),
+      (W: 15; H: 21; MaxHP: 142; Speed: 222; Collect:  0; Build: False),
       ()
    );
 

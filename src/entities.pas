@@ -11,6 +11,11 @@ Type
       HP : Double;
       Team : uInt;
       
+      SightRange : Double;
+      
+      FireRange : Double;
+      FireInterval : sInt;
+      
       Procedure Calculate(); Virtual; Abstract;
       
       Destructor Destroy(); Virtual; Abstract;

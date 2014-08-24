@@ -6,6 +6,22 @@ interface
    uses Enums, Entities;
 
 Type
+   TBuildingStats = record
+      MaxHP : Double;
+      BuildTime : Double;
+      Collect : Boolean;
+   end;
+
+Const
+   BuildingStats : Array[TBuildingType] of TBuildingStats = (
+      (),
+      (),
+      (),
+      (),
+      ()
+   );
+
+Type
    TProduction = record
       Active : Boolean;
       crType : TCreatureType;

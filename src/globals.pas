@@ -18,6 +18,7 @@ Const
    SDL_TICKS_PER_SECOND = 1000;
    PLANET_GRANULARITY = 10;
    CAMERA_SPEED = 500;
+   PlayerTeam = 0;
    
    ARRAY_RESIZE_STEP = 8;
    SEL_MAX = 30;
@@ -26,6 +27,11 @@ Type
    PPoint = ^TPoint;
    TPoint = record
       X, Y : Double
+   end;
+   
+   PSightZone = ^TSightZone;
+   TSightZone = record
+      cMin, cMax : Double
    end;
    
    PPlanet = ^TPlanet;
@@ -55,6 +61,9 @@ Var
    
    Planet : Array[0..1] of TPlanet;
    
+   SightZone : Array of TSightZone;
+   SightZoneNum, SightZoneLen : sInt;
+   
    mX, mY : sInt;
    mSelX, mSelY : sInt;
    
@@ -71,6 +80,9 @@ Var
 
 Function GetAngle(Const Sin,Cos:Double):Double;
 Procedure CalcPlanetZones();
+
+Procedure CalcSightZones();
+Function InSight(Const isC:Double):Boolean;
 
 Procedure CH_to_XYA(Const C,H:Double;Const Point:PPoint;Const Angle:PDouble);
 Procedure CH_to_XY(Const C,H:Double;Const Point:PPoint);
@@ -176,6 +188,66 @@ Procedure CH_to_XYA(Const C,H:Double;Const Point:PPoint;Const Angle:PDouble);
       Point^.X := Planet[pl].X + Cos(Angle^) * Planet[pl].R;
       Point^.Y := Planet[pl].Y + Sin(Angle^) * Planet[pl].R;
    end;
+
+
+Procedure AddSightZone(Const min,max:Double);
+   Var Idx : sInt;
+   begin
+      If (SightZoneNum = SightZoneLen) then begin
+         SightZoneLen += ARRAY_RESIZE_STEP;
+         SetLength(SightZone, SightZoneLen)
+      end;
+      SightZone[SightZoneNum].Cmin := min;
+      SightZone[SightZoneNum].Cmax := max;
+      SightZoneNum += 1;
+   end;
+
+
+Procedure AddSight(Const C,R:Double);
+   Var cMin, cMax : Double;
+   begin
+      cMin := C - R; cMax := c + R;
+      
+      If (cMin < 0) then begin
+         AddSightZone(Planet[1].Cmax + cMin, Planet[1].Cmax);
+         AddSightZone(0, cMax)
+      end else
+      If (cMax > Planet[1].Cmax) then begin
+         AddSightZone(cMin, Planet[1].Cmax);
+         AddSightZone(0, cMax - Planet[1].Cmax)
+      end else begin
+         AddSightZone(cMin, cMax);
+      end
+   end;
+
+
+Procedure CalcSightZones();
+   Var Idx : sInt;
+   begin
+      SightZoneNum := 0;
+      
+      If (CreatureNum > 0) then
+         For Idx := 0 to (CreatureLen - 1) do
+            If (Creature[Idx] <> NIL) and (Creature[Idx]^.Team = PlayerTeam) then
+               AddSight(Creature[Idx]^.C, Creature[Idx]^.SightRange);
+               
+      If (BuildingNum > 0) then
+         For Idx := 0 to (BuildingLen - 1) do
+            If (Building[Idx] <> NIL) and (Building[Idx]^.Team = PlayerTeam) then
+               AddSight(Building[Idx]^.C, Building[Idx]^.SightRange);
+   end;
+
+
+Function InSight(Const isC:Double):Boolean;
+   Var Idx : sInt;
+   begin
+      If (SightZoneNum <= 0) then Exit(False);
+      For Idx := 0 to (SightZoneNum - 1) do
+         If (SightZone[Idx].Cmin <= isC) and (SightZone[Idx].Cmax >= isC)
+            then Exit(True);
+      Exit(False)
+   end;
+
 
 Procedure CH_to_XY(Const C,H:Double;Const Point:PPoint);
    Var Angle:Double;

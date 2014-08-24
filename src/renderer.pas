@@ -16,8 +16,9 @@ implementation
 
 
 Procedure DrawPlanets();
-   Var Pl, Points, Pt : uInt; Angle : Double;
+   Var Pl, sz, Points, Pt : sInt; nowC, Diff, Angle : Double;
    begin
+      (*
       For Pl := 0 to 1 do begin
          Points := Trunc(Planet[Pl].Circu / PLANET_GRANULARITY);
          
@@ -28,6 +29,32 @@ Procedure DrawPlanets();
                glVertex2f(
                   Planet[Pl].X + Cos(Angle)*Planet[Pl].R,
                   Planet[Pl].Y + Sin(Angle)*Planet[Pl].R
+               );
+            end;
+         glEnd()
+      end
+      *)
+      For sz := 0 to (SightZoneNum - 1) do begin
+         Diff := SightZone[sz].Cmax - SightZone[sz].Cmin;
+         Points := Trunc(Diff / PLANET_GRANULARITY);
+         
+         glBegin(GL_LINE_STRIP);
+            glColor4ub(255,255,255,255);
+            For Pt := 0 to Points do begin
+               
+               nowC := SightZone[sz].Cmin + Diff * pt / Points;
+               If (nowC < Planet[0].Cmax) then begin
+                  Pl := 0;
+                  Angle := 2 * Pi * nowC / Planet[Pl].Circu;
+               end else begin
+                  Pl := 1;
+                  nowC -= Planet[0].Cmax;
+                  Angle := 2 * Pi * nowC / Planet[Pl].Circu;
+               end;
+               
+               glVertex2f(
+                  Planet[Pl].X + Cos(Angle + Planet[Pl].AngDelta)*Planet[Pl].R,
+                  Planet[Pl].Y + Sin(Angle + Planet[Pl].AngDelta)*Planet[Pl].R
                );
             end;
          glEnd()
@@ -100,6 +127,7 @@ Procedure DrawResources();
       glColor4ub(255,255,255,255);
       For R := 0 to (ResourceLen - 1) do begin
          If (Resource[R] = NIL) then Continue;
+         If (Not InSight(Resource[R]^.C)) then Continue;
          
          CH_to_XYA(Resource[R]^.C,0,@ResPt,@ResAng);
          
