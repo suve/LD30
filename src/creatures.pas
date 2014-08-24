@@ -33,8 +33,7 @@ Type
       Anim : TCreatureAnim;
       Facing : TFacing;
 
-      Order : TCreatureOrder;
-      OrderTarget : sInt;
+      Order : TOrderData;
       
       CarryType : TResourceType;
       CarryAmount : Double;
@@ -51,7 +50,7 @@ Var
    CreatureNum, CreatureLen : uInt;
 
 implementation
-   uses Globals, Resources;
+   uses Globals, Resources, Buildings;
 
 Constructor TCreature.Create();
    begin
@@ -90,32 +89,33 @@ Procedure TCreature.WalkTowards(Const dest:Double);
 Procedure TCreature.Calculate();
    Const MINING_SPEED = 4;
    begin
-      Case (Self.Order) of
+      Case (Self.Order.Typ) of
          
          CROR_PATROL: Self.Facing := FACE_MID;
          
          CROR_STAND: Self.Facing := FACE_MID;
          
          CROR_WALK: begin
-            WalkTowards(Self.OrderTarget);
+            WalkTowards(Self.Order.Dest);
 
-            If (CDist(Self.C, OrderTarget) < 10) 
-               then Self.Order := CROR_PATROL
+            If (CDist(Self.C, Order.Dest) < 10) 
+               then Self.Order.Typ := CROR_PATROL
          end;
          
          CROR_COL_CRYS, CROR_COL_TIMB, CROR_COL_META: begin
-            If (OrderTarget < 0) or (Resource[OrderTarget] = NIL) or (Resource[OrderTarget]^.Amount <= 0) then begin
-               OrderTarget := NearestResource(Self.C, TResourceType(Ord(Self.Order) - Ord(CROR_COL_CRYS)));
-               If (OrderTarget < 0) then begin
-                  Self.Order := CROR_PATROL;
+            If (Order.Coll.Target < 0) or (Order.Coll.Target >= ResourceLen) or 
+            {} (Resource[Order.Coll.Target] = NIL) or (Resource[Order.Coll.Target]^.Amount <= 0) then begin
+               Order.Coll.Target := NearestResource(Self.C, TResourceType(Ord(Self.Order.Typ) - Ord(CROR_COL_CRYS)));
+               If (Order.Target < 0) then begin
+                  Self.Order.Typ := CROR_PATROL;
                   Exit()
                end;
             end;
             
-            If (CDist(Self.C, Resource[OrderTarget]^.C) < 10) then begin
+            If (CDist(Self.C, Resource[Order.Coll.Target]^.C) < 10) then begin
             
-               If (Self.CarryType <> Resource[OrderTarget]^.Typ) then begin
-                  Self.CarryType := Resource[OrderTarget]^.Typ;
+               If (Self.CarryType <> Resource[Order.Coll.Target]^.Typ) then begin
+                  Self.CarryType := Resource[Order.Coll.Target]^.Typ;
                   Self.CarryAmount := 0.0
                end;
                Self.CarryAmount += dt * MINING_SPEED;
@@ -123,18 +123,34 @@ Procedure TCreature.Calculate();
                Self.Anim := TCreatureAnim(Ord(CRAN_CRYST) + Ord(Self.CarryType));
                
                If (Self.CarryAmount >= CreatureStats[Self.Typ].Collect) then
-                  Self.Order := TCreatureOrder(Ord(Self.Order) + 3);
+                  Self.Order.Typ := TCreatureOrder(Ord(Self.Order.Typ) + 3);
                
-               MineResource(OrderTarget, dt * MINING_SPEED);
+               MineResource(Order.Coll.Target, dt * MINING_SPEED);
                
-            end else Self.WalkTowards(Resource[OrderTarget]^.C)
+            end else Self.WalkTowards(Resource[Order.Coll.Target]^.C)
          end;
          
-         CROR_RET_CRYS, CROR_RET_TIMB, CROR_RET_META:begin
-            WalkTowards(1000);
-
-            If (CDist(Self.C,1000) < 10)
-               then Self.Order := CROR_PATROL
+         CROR_RET_CRYS, CROR_RET_TIMB, CROR_RET_META: begin
+            //Writeln('Order.Coll.Return: ',Order.Coll.Return);
+            If (Order.Coll.Return < 0) or (Order.Coll.Return >= BuildingLen) or (Building[Order.Coll.Return] = NIL) or
+            {} (Building[Order.Coll.Return]^.Team <> Self.Team) or (Not BuildingStats[Building[Order.Coll.Return]^.Typ].Collect)  then begin
+               Order.Coll.Return := NearestCollector(Self.C, Self.Team);
+               If (Order.Coll.Return < 0) then begin
+                  Self.Order.Typ := CROR_PATROL;
+                  Exit()
+               end;
+            end;
+            
+            If (CDist(Self.C, Building[Order.Coll.Return]^.C) < 30) then begin
+            
+               PlayerResources[Self.Team][Self.CarryType] += Self.CarryAmount;
+               
+               Self.Order.Typ := TCreatureOrder(Ord(Self.Order.Typ) - 3);
+               
+               Self.Anim := CRAN_STAND;
+               Self.CarryAmount := 0;
+               
+            end else Self.WalkTowards(Building[Order.Coll.Return]^.C)
          end;
             
          

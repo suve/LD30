@@ -9,11 +9,25 @@ Type
    
    TCreatureOrder = (
       CROR_PATROL, CROR_STAND, CROR_WALK,
-      CROR_ATT_WALK, CROR_ATT_UNIT, CROR_ATT_BLDG,
+      CROR_ATT_WALK, CROR_ATT_CREA, CROR_ATT_BLDG,
       CROR_COL_CRYS, CROR_COL_TIMB, CROR_COL_META,
       CROR_RET_CRYS, CROR_RET_TIMB, CROR_RET_META,
       CROR_LENGTH
    );
+   
+   TCollectInfo = record
+      // ReTy : TResourceType;
+      Target : sInt;
+      Return : sInt;
+   end;
+   
+   TOrderData = record
+      Case Typ : TCreatureOrder of
+         CROR_PATROL, CROR_STAND: (Pos : Double);
+         CROR_WALK, CROR_ATT_WALK : (Dest : Double);
+         CROR_ATT_CREA, CROR_ATT_BLDG : (Target : sInt);
+         CROR_COL_CRYS .. CROR_RET_META: (Coll : TCollectInfo);
+   end;
    
    TCreatureAnim = (CRAN_STAND, CRAN_ATTAK, CRAN_CRYST, CRAN_TIMBE, CRAN_METAL);
    

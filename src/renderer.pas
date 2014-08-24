@@ -144,22 +144,26 @@ Procedure DrawResources();
 
 
 Procedure DrawBuildings();
-   const SIZE = 12;
    Var B:uInt; buPt : TPoint; buAn : Double;
    begin
       If (BuildingNum <= 0) then Exit;
       
+      Sour.TexEnable; Sour.TexBind(BuildingGfx^.Tex);
       glBegin(GL_QUADS);
-      glColor4ub(255,127,63,255);
+      glColor4ub(255,255,255,255);
       For B:=0 to (BuildingLen - 1) do begin
          If (Building[B] = NIL) then Continue;
          
          CH_to_XYA(Building[B]^.C, 0, @buPt, @buAn);
          
-         glVertex2f(buPt.X - SIZE * Cos(buAn + 1*Pi/4), buPt.Y - SIZE * Sin(buAn + 1*Pi/4));
-         glVertex2f(buPt.X - SIZE * Cos(buAn + 3*Pi/4), buPt.Y - SIZE * Sin(buAn + 3*Pi/4));
-         glVertex2f(buPt.X - SIZE * Cos(buAn + 5*Pi/4), buPt.Y - SIZE * Sin(buAn + 5*Pi/4));
-         glVertex2f(buPt.X - SIZE * Cos(buAn + 7*Pi/4), buPt.Y - SIZE * Sin(buAn + 7*Pi/4));
+         DrawSprite(BuildingGfx,
+            0,
+            Ord(Building[B]^.Typ)*21,
+            30, 21,
+            buPt.X, buPt.Y,
+            30 * 3, 21 * 3,
+            buAn
+            ); 
       end;
       glEnd();
    end;
@@ -288,7 +292,7 @@ Procedure DrawUI_Windows(Const UIType:TUIType;Const UI_Space:uInt);
       Crd.X -= UI_GAP + UIGfx[UIType][UIS_METAL]^.W;
       Sour.DrawImage(UIGfx[UIType][UIS_METAL],NIL,@Crd);
       Sour.PrintText(
-         '0',
+         IntToStr(Trunc(PlayerResources[0][RSRC_METAL])),
          FontA,
          Crd.X + UIGfx[UIType][UIS_METAL]^.W - UI_Space,
          Crd.Y + 6,
@@ -298,7 +302,7 @@ Procedure DrawUI_Windows(Const UIType:TUIType;Const UI_Space:uInt);
       Crd.X -= UI_GAP + UIGfx[UIType][UIS_TIMBER]^.W;
       Sour.DrawImage(UIGfx[UIType][UIS_TIMBER],NIL,@Crd);
       Sour.PrintText(
-         '0',
+         IntToStr(Trunc(PlayerResources[0][RSRC_TIMBER])),
          FontA,
          Crd.X + UIGfx[UIType][UIS_TIMBER]^.W - UI_Space,
          Crd.Y + 6,
@@ -308,7 +312,7 @@ Procedure DrawUI_Windows(Const UIType:TUIType;Const UI_Space:uInt);
       Crd.X -= UI_GAP + UIGfx[UIType][UIS_CRYSTALS]^.W;
       Sour.DrawImage(UIGfx[UIType][UIS_CRYSTALS],NIL,@Crd);
       Sour.PrintText(
-         '0',
+         IntToStr(Trunc(PlayerResources[0][RSRC_CRYSTAL])),
          FontA,
          Crd.X + UIGfx[UIType][UIS_CRYSTALS]^.W - UI_Space,
          Crd.Y + 6,

@@ -14,10 +14,10 @@ Type
 
 Const
    BuildingStats : Array[TBuildingType] of TBuildingStats = (
-      (),
-      (),
-      (),
-      (),
+      (MaxHP: 500; BuildTime: 60; Collect: True),
+      (MaxHP: 200; BuildTime: 45; Collect: False),
+      (MaxHP: 400; BuildTime: 48; Collect: True),
+      (MaxHP: 155; BuildTime: 36; Collect: False),
       ()
    );
 
@@ -33,8 +33,8 @@ Type
    PBuilding = ^TBuilding;
    TBuilding = object(TEntity)
       
+      Typ : TBuildingType;
       Finished : Double;
-      
       Production : TProduction;
       
       Procedure Calculate(); Virtual;
@@ -47,6 +47,8 @@ Var
    Building : Array of PBuilding;
    BuildingNum, BuildingLen : uInt;
 
+
+Function NearestCollector(Const ncC:Double;Const Team:sInt):sInt;
 
 
 implementation
@@ -72,5 +74,26 @@ Destructor TBuilding.Destroy();
    begin
       
    end;
+
+
+Function NearestCollector(Const ncC:Double;Const Team:sInt):sInt;
+   Var Idx, nID : sInt; Dist, nDst : Double;
+   begin
+      If (BuildingNum <= 0) then Exit(-1);
+      
+      nID := -1; nDst := 1000000;
+      
+      For Idx := 0 to (BuildingLen - 1) do
+         If (Building[Idx] <> NIL) then
+            If (Building[Idx]^.Team = Team) and (BuildingStats[Building[Idx]^.Typ].Collect) then begin
+               Dist := CDist(nCC, Building[Idx]^.C);
+               If (Dist < nDst) then begin
+                  nID := Idx; nDst := Dist
+               end
+            end;
+         
+      Exit(nID)
+   end;
+
 
 end.

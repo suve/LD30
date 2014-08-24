@@ -12,7 +12,7 @@ Const
    GAME_NAME = 'TechnoTumor';
    GAME_VMAJOR = 0;
    GAME_VMINOR = 3;
-   GAME_VBUGFX = 0;
+   GAME_VBUGFX = 1;
    GAME_VERSION = Chr(48+GAME_VMAJOR) + '.' + Chr(48+GAME_VMINOR) + '.' + Chr(48+GAME_VBUGFX);
 
    SDL_TICKS_PER_SECOND = 1000;
@@ -76,6 +76,8 @@ Var
    SelType : TSelectionType;
    SelID : Array[0..SEL_MAX-1] of sInt;
    SelLen : uInt;
+   
+   PlayerResources : Array[0..1, TResourceType] of Double;
 
 
 Function GetAngle(Const Sin,Cos:Double):Double;
@@ -291,7 +293,8 @@ Procedure FinishProduction(Const Build:PBuilding);
       Crea^.Typ := Build^.Production.crType;
       Crea^.Team := Build^.Team;
       
-      Crea^.Order := CROR_PATROL;
+      Crea^.Order.Typ := CROR_PATROL;
+      Crea^.Order.Pos := Build^.C;
       
       InsertCreature(Crea);
       

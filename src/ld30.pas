@@ -123,7 +123,7 @@ Procedure IssueOrder();
          If (cAng < 0) then cAng += 2*Pi;
          cC := Planet[pl].Cmin + cAng * Planet[pl].R;
          
-         Res := ResourceAvailable(cC,48);
+         Res := ResourceAvailable(cC,75);
          
          Writeln('Planet ',pl,' cC: ',Trunc(cC),' (',Trunc(Planet[pl].Cmin),' - ',Trunc(Planet[pl].Cmax),'); Res: ',Res);
          
@@ -133,11 +133,11 @@ Procedure IssueOrder();
                   If (SelID[Idx] >= 0) and (SelID[Idx] < CreatureLen) then
                      If (Creature[SelID[Idx]] <> NIL) then begin
                         If (Res >= 0) and (CreatureStats[Creature[SelID[Idx]]^.Typ].Collect > 0) then begin
-                           Creature[SelID[Idx]]^.Order := TCreatureOrder(Ord(CROR_COL_CRYS) + Ord(Resource[Res]^.Typ));
-                           Creature[SelID[Idx]]^.OrderTarget := Res;
+                           Creature[SelID[Idx]]^.Order.Typ := TCreatureOrder(Ord(CROR_COL_CRYS) + Ord(Resource[Res]^.Typ));
+                           Creature[SelID[Idx]]^.Order.Coll.Target := Res;
                         end else begin
-                           Creature[SelID[Idx]]^.Order := CROR_WALK;
-                           Creature[SelID[Idx]]^.OrderTarget := Trunc(cC);
+                           Creature[SelID[Idx]]^.Order.Typ := CROR_WALK;
+                           Creature[SelID[Idx]]^.Order.Dest := cC;
                         end;
                      end;
             Exit()
@@ -327,26 +327,39 @@ begin // MAIN
    end;
    ResourceNum := ResourceLen;
    
-   CreatureLen := 50;
+   BuildingLen := 2;
+   SetLength(Building, BuildingLen);
+   For BuildingNum := 0 to (BuildingLen - 1) do begin
+      New(Building[BuildingNum],Create());
+      
+      Building[BuildingNum]^.C := Random() * Planet[1].Cmax;
+      Building[BuildingNum]^.Typ := TBuildingType(2 * BuildingNum);
+      
+      Building[BuildingNum]^.Team := PlayerTeam;
+      Building[BuildingNum]^.SightRange := 222
+   end;
+   BuildingNum := BuildingLen;
+   
+   CreatureLen := 40;
    SetLength(Creature, CreatureLen);
    For CreatureNum := 0 to (CreatureLen-1) do begin
       New(Creature[CreatureNum],Create());
       
       Creature[CreatureNum]^.C := Random() * Planet[1].Cmax;
       
-      Creature[CreatureNum]^.Order := CROR_WALK;
-      Creature[CreatureNum]^.OrderTarget := Trunc(Random() * Planet[1].Cmax);
+      Creature[CreatureNum]^.Order.Typ := CROR_WALK;
+      Creature[CreatureNum]^.Order.Dest := Random() * Planet[1].Cmax;
       
       Creature[CreatureNum]^.Typ := TCreatureType(Random(7));
       Creature[CreatureNum]^.Anim := CRAN_STAND;
       
-      Creature[CreatureNum]^.SightRange := 369;
+      Creature[CreatureNum]^.Team := PlayerTeam;
+      Creature[CreatureNum]^.SightRange := CreatureStats[Creature[CreatureNum]^.Typ].Speed / 1.5;
    end;
    CreatureNum := CreatureLen;
    
-   BuildingLen := 0;
-   BuildingNum := 0;
    SelType := SEL_NONE;
+   SelLen := 0;
    
    Repeat
       
