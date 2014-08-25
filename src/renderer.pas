@@ -430,10 +430,179 @@ Procedure DrawUI_Selection(Const UIType:TUIType;Const UI_Space:uInt);
    end;
 
 
+Procedure DrawUI_Production(Const UIType:TUIType;Const UI_Space:uInt);
+   Const
+        Red : Sour.TColour = (R: 128; G:   0; B: 0; A: 255);
+      Green : Sour.TColour = (R:   0; G: 128; B: 0; A: 255);
+   Var
+      aX, aY, bX, bY : Double; Col : Sour.PColour; Rekt : Sour.TCrd;
+      ctMin, ctMax, crtp : TCreatureType;
+      btMin, btMax, butp : TBuildingType;
+      DrawCost : Boolean; Costs : Array[TResourceType] of Double;
+   begin
+      If (SelType < SEL_CREAT) or (Not SelWorkers) then Exit();
+      DrawCost := False; 
+      
+      If (SelType = SEL_CREAT) then begin
+         
+         If (UIType = UI_TECHNO) then begin
+            btMin := BUTECH_BASE;
+            btMax := BUTRIB_BASE;
+         end else begin
+            btMin := BUTRIB_BASE;
+            btMax := BUTYPE_LENGTH;
+         end;
+         
+         Sour.TexEnable(); Sour.TexBind(UIGfx[UIType][UIS_SEL_L]^.Tex);
+         butp := btMin; Rekt.X := 10; Rekt.Y := 60;
+         While (butp < btMax) do begin
+            If (BuildingStats[butp].Cost[RSRC_CRYSTAL] <= PlayerResources[PlayerTeam][RSRC_CRYSTAL]) and
+            {} (BuildingStats[butp].Cost[RSRC_TIMBER] <= PlayerResources[PlayerTeam][RSRC_TIMBER]) and
+            {} (BuildingStats[butp].Cost[RSRC_METAL] <= PlayerResources[PlayerTeam][RSRC_METAL])
+               then Col := @Green
+               else Col := @Red;
+            
+            Sour.DrawImage(UIGfx[UIType][UIS_SEL_L],NIL,@Rekt,Col); Rekt.X += UI_Space;
+            Sour.DrawImage(UIGfx[UIType][UIS_SEL_M],NIL,@Rekt,Col); Rekt.X += 17;
+            Sour.DrawImage(UIGfx[UIType][UIS_SEL_M],NIL,@Rekt,Col); Rekt.X += 17;
+            Sour.DrawImage(UIGfx[UIType][UIS_SEL_R],NIL,@Rekt,Col); Rekt.X += UI_Space + 10;
+            
+            Inc(butp)
+         end;
+         
+         Sour.TexBind(BuildingGfx^.Tex);
+         glBegin(GL_QUADS);
+         glColor4ub(255,255,255,255);
+         butp := btMin; Rekt.X := 10 + UI_Space + 2; Rekt.Y := 60 + 7;
+         While (butp < btMax) do begin
+            aX := 0;
+            aY := Ord(butp) * 21;
+            bX := aX + 30; bY := aY + 21;
+            
+            aX /= BuildingGfx^.TexW; bX /= BuildingGfx^.TexW;
+            aY /= BuildingGfx^.TexH; bY /= BuildingGfx^.TexH;
+            
+            glTexCoord2f(aX,aY); glVertex2f(Rekt.X   ,Rekt.Y   );
+            glTexCoord2f(aX,bY); glVertex2f(Rekt.X   ,Rekt.Y+21);
+            glTexCoord2f(bX,bY); glVertex2f(Rekt.X+30,Rekt.Y+21);
+            glTexCoord2f(bX,aY); glVertex2f(Rekt.X+30,Rekt.Y   );
+            
+            If (mX >= Rekt.X) and (mY >= Rekt.Y) and (mX < Rekt.X+30) and (my < Rekt.Y+21) then begin
+               DrawCost := True;
+               Costs := BuildingStats[butp].Cost;
+            end;
+            
+            Rekt.X += 17 + 17 + UI_Space + 10 + UI_Space;
+            Inc(butp)
+         end;
+         glEnd()
+         
+      end else begin
+         
+         If (UIType = UI_TECHNO) then begin
+            ctMin := CRTECH_WORK;
+            ctMax := CRTRIB_WORK;
+         end else begin
+            ctMin := CRTRIB_WORK;
+            ctMax := CRTYPE_LENGTH;
+         end;
+         
+         Sour.TexEnable(); Sour.TexBind(UIGfx[UIType][UIS_SEL_L]^.Tex);
+         crtp := ctMin; Rekt.X := 10; Rekt.Y := 60;
+         While (crtp < ctMax) do begin
+            If (CreatureStats[crtp].Cost[RSRC_CRYSTAL] <= PlayerResources[PlayerTeam][RSRC_CRYSTAL]) and
+            {} (CreatureStats[crtp].Cost[RSRC_TIMBER] <= PlayerResources[PlayerTeam][RSRC_TIMBER]) and
+            {} (CreatureStats[crtp].Cost[RSRC_METAL] <= PlayerResources[PlayerTeam][RSRC_METAL])
+               then Col := @Green
+               else Col := @Red;
+            
+            Sour.DrawImage(UIGfx[UIType][UIS_SEL_L],NIL,@Rekt,Col); Rekt.X += UI_Space;
+            Sour.DrawImage(UIGfx[UIType][UIS_SEL_M],NIL,@Rekt,Col); Rekt.X += 17;
+            Sour.DrawImage(UIGfx[UIType][UIS_SEL_R],NIL,@Rekt,Col); Rekt.X += UI_Space + 10;
+            
+            Inc(crtp)
+         end;
+         
+         Sour.TexBind(CreatureGfx^.Tex);
+         glBegin(GL_QUADS);
+         glColor4ub(255,255,255,255);
+         crtp := ctMin; Rekt.X := 10 + UI_Space + 1; Rekt.Y := 60 + 7;
+         While (crtp < ctMax) do begin
+            aX := 15;
+            aY := Ord(crtp) * 21;
+            bX := aX + 15; bY := aY + 21;
+            
+            aX /= CreatureGfx^.TexW; bX /= CreatureGfx^.TexW;
+            aY /= CreatureGfx^.TexH; bY /= CreatureGfx^.TexH;
+            
+            glTexCoord2f(aX,aY); glVertex2f(Rekt.X   ,Rekt.Y   );
+            glTexCoord2f(aX,bY); glVertex2f(Rekt.X   ,Rekt.Y+21);
+            glTexCoord2f(bX,bY); glVertex2f(Rekt.X+15,Rekt.Y+21);
+            glTexCoord2f(bX,aY); glVertex2f(Rekt.X+15,Rekt.Y   );
+            
+            If (mX >= Rekt.X) and (mY >= Rekt.Y) and (mX < Rekt.X+15) and (my < Rekt.Y+21) then begin
+               DrawCost := True;
+               Costs := CreatureStats[crtp].Cost;
+            end;
+            
+            Rekt.X += 17 + UI_Space + 10 + UI_Space;
+            Inc(crtp)
+         end;
+         glEnd()
+         
+      end;
+      
+      If (DrawCost) then begin
+         Rekt.X := Screen^.W - 1;
+         Rekt.Y := 42;
+         
+         If(PlayerResources[PlayerTeam][RSRC_METAL] >= Costs[RSRC_METAL])
+            then Col := @Green else Col := @Red;
+         
+         Rekt.X -= 10 + UIGfx[UIType][UIS_METAL]^.W;
+         Sour.DrawImage(UIGfx[UIType][UIS_METAL],NIL,@Rekt,Col);
+         Sour.PrintText(
+            IntToStr(Trunc(Costs[RSRC_METAL])),
+            FontA,
+            Rekt.X + UIGfx[UIType][UIS_METAL]^.W - (UI_Space + 1),
+            Rekt.Y + 6,
+            ALIGN_RIGHT
+            );
+         
+         If(PlayerResources[PlayerTeam][RSRC_METAL] >= Costs[RSRC_METAL])
+            then Col := @Green else Col := @Red;
+         
+         Rekt.X -= 10 + UIGfx[UIType][UIS_TIMBER]^.W;
+         Sour.DrawImage(UIGfx[UIType][UIS_TIMBER],NIL,@Rekt,Col);
+         Sour.PrintText(
+            IntToStr(Trunc(Costs[RSRC_TIMBER])),
+            FontA,
+            Rekt.X + UIGfx[UIType][UIS_TIMBER]^.W - (UI_Space + 1),
+            Rekt.Y + 6,
+            ALIGN_RIGHT
+            );
+         
+         If(PlayerResources[PlayerTeam][RSRC_METAL] >= Costs[RSRC_METAL])
+            then Col := @Green else Col := @Red;
+         
+         Rekt.X -= 10 + UIGfx[UIType][UIS_CRYSTALS]^.W;
+         Sour.DrawImage(UIGfx[UIType][UIS_CRYSTALS],NIL,@Rekt,Col);
+         Sour.PrintText(
+            IntToStr(Trunc(Costs[RSRC_CRYSTAL])),
+            FontA,
+            Rekt.X + UIGfx[UIType][UIS_CRYSTALS]^.W - (UI_Space + 1),
+            Rekt.Y + 6,
+            ALIGN_RIGHT
+            );
+      end;
+   end;
+
+
 Procedure DrawUI_Techno();
    begin
       DrawUI_Windows(UI_TECHNO, 6);
       DrawUI_Selection(UI_TECHNO, 5);
+      DrawUI_Production(UI_TECHNO, 5);
    end;
 
 
@@ -441,6 +610,7 @@ Procedure DrawUI_Tribal();
    begin
       DrawUI_Windows(UI_TRIBAL, 8);
       DrawUI_Selection(UI_TRIBAL, 7);
+      DrawUI_Production(UI_TRIBAL, 7);
    end;
 
 

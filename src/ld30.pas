@@ -71,11 +71,12 @@ Procedure MakeSelection();
       If (bX < aX) then begin T := aX; aX := bX; bX := T end;
       If (bY < aY) then begin T := aY; aY := bY; bY := T end;
       
-      SelLen := 0;
+      SelLen := 0; SelWorkers := False;
       If (CreatureNum > 0) then begin
          For Idx := 0 to (CreatureLen - 1) do
             If (Creature[Idx] <> NIL) and (Creature[Idx]^.Team = PlayerTeam) then
                If (EntityInBox(Creature[Idx],15,21,aX,aY,bX,bY)) then begin
+                  If (CreatureStats[Creature[Idx]^.Typ].Build) then SelWorkers := True;
                   SelID[selLen] := Idx;
                   selLen += 1;
                   If (selLen = SEL_MAX) then Break;
@@ -89,6 +90,7 @@ Procedure MakeSelection();
          For Idx := 0 to (BuildingLen - 1) do
             If (Building[Idx] <> NIL) and (Building[Idx]^.Team = PlayerTeam)  then
                If (EntityInBox(Building[Idx],30,42,aX,aY,bX,bY)) then begin
+                  If (BuildingStats[Building[Idx]^.Typ].Produce) then SelWorkers := True;
                   SelID[selLen] := Idx;
                   selLen += 1;
                   If (selLen = SEL_MAX) then Break;

@@ -10,14 +10,16 @@ Type
       MaxHP : Double;
       BuildTime : Double;
       Collect : Boolean;
+      Produce : Boolean;
+      Cost : Array[TResourceType] of Double
    end;
 
 Const
    BuildingStats : Array[TBuildingType] of TBuildingStats = (
-      (MaxHP: 500; BuildTime: 60; Collect: True),
-      (MaxHP: 200; BuildTime: 45; Collect: False),
-      (MaxHP: 400; BuildTime: 48; Collect: True),
-      (MaxHP: 155; BuildTime: 36; Collect: False),
+      (MaxHP: 500; BuildTime: 60; Collect:  True; Produce:  True; Cost: ( 400, 100, 250)),
+      (MaxHP: 200; BuildTime: 45; Collect: False; Produce: False; Cost: ( 120,   0,  80)),
+      (MaxHP: 400; BuildTime: 48; Collect:  True; Produce:  True; Cost: ( 400, 250,  30)),
+      (MaxHP: 155; BuildTime: 36; Collect: False; Produce: False; Cost: (  80,  72,  10)),
       ()
    );
 

@@ -59,7 +59,6 @@ Var
    FrameStr : AnsiString = 'FPS: ???';
    
    Planet : Array[0..1] of TPlanet;
-   PlayerTeam : uInt = 0;
    
    SightZone : Array of TSightZone;
    SightZoneNum, SightZoneLen : sInt;
@@ -74,11 +73,13 @@ Var
    CamScaleFactor : Double = 1;
 
    SelType : TSelectionType;
+   SelWorkers : Boolean;
+   
    SelID : Array[0..SEL_MAX-1] of sInt;
    SelLen : uInt;
    
    PlayerResources : Array[0..1, TResourceType] of Double;
-
+   PlayerTeam : uInt = 0;
 
 Function GetAngle(Const Sin,Cos:Double):Double;
 Procedure CalcPlanetZones();
