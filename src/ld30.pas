@@ -122,6 +122,115 @@ Procedure ChangeTeam(Const NewTeam : uInt);
    end;
 
 
+Procedure OrderBuild(Const bt:TBuildingType);
+   Var Idx, bIdx : sInt; BU:PBuilding;
+   begin
+      For Idx := 0 to (SelLen - 1) do
+         If (Creature[SelID[Idx]] <> NIL) and (CreatureStats[Creature[SelID[Idx]]^.Typ].Build) then begin
+            If (Not EnoughResources(BuildingStats[bt].Cost)) then Exit();
+            
+            New(BU,Create());
+            BU^.C := Creature[SelID[Idx]]^.C;
+            
+            If (BU^.Typ < BUTRIB_BASE)
+               then BU^.Team := 0
+               else BU^.Team := 1;
+            
+            BU^.SightRange := 222;
+            
+            If (BuildingNum = BuildingLen) then begin
+               BuildingLen += ARRAY_RESIZE_STEP;
+               SetLength(Building, BuildingLen);
+               bIdx := BuildingNum
+            end else
+               For bIdx := 0 to (BuildingLen - 1) do
+                  If (Building[bIdx] = NIL) then break;
+            
+            Building[bIdx] := BU;
+            BuildingNum += 1;
+            
+            RemoveResources(BuildingStats[bt].Cost)
+         end;
+   end;
+
+
+Procedure OrderProduce(Const ct:TCreatureType);
+   Var Idx, cIdx : sInt; CR:PCreature;
+   begin
+      For Idx := 0 to (SelLen - 1) do
+         If (Building[SelID[Idx]] <> NIL) and (BuildingStats[Building[SelID[Idx]]^.Typ].Produce) then begin
+            If (Not EnoughResources(CreatureStats[ct].Cost)) then Exit();
+            
+            New(CR,Create());
+            CR^.C := Building[SelID[Idx]]^.C;
+      
+            CR^.Order.Typ := CROR_PATROL;
+            
+            CR^.Typ := ct;
+            CR^.Anim := CRAN_STAND;
+            
+            If (CR^.Typ < CRTRIB_WORK)
+               then CR^.Team := 0
+               else CR^.Team := 1;
+            
+            CR^.SightRange := CreatureStats[ct].Speed / 1.5;
+            
+            If (CreatureNum = CreatureLen) then begin
+               CreatureLen += ARRAY_RESIZE_STEP;
+               SetLength(Creature, CreatureLen);
+               cIdx := CreatureNum
+            end else
+               For cIdx := 0 to (CreatureLen - 1) do
+                  If (Creature[cIdx] = NIL) then break;
+            
+            Creature[cIdx] := CR;
+            CreatureNum += 1;
+            
+            RemoveResources(CreatureStats[ct].Cost)
+         end;
+   end;
+
+
+Procedure MakeLeftClick();
+   Var
+      BtnWid, BtnNum, BtnSel, Idx, Off : sInt;
+      aX, aY, bX, bY : sInt;
+   begin
+      If (SelType >= SEL_CREAT) and (SelWorkers) then begin
+         
+         If (PlayerTeam = 0) then begin
+            If (SelType = SEL_BUILD)
+               then begin BtnWid := (17 + 2*6);   BtnNum := 4; Off := 0 end
+               else begin BtnWid := (17*2 + 2*6); BtnNum := 2; Off := 0 end
+         end else begin
+            If (SelType = SEL_BUILD)
+               then begin BtnWid := (17 + 2*8);   BtnNum := 3; Off := 4 end
+               else begin BtnWid := (17*2 + 2*8); BtnNum := 2; Off := 2 end
+         end;
+         
+         BtnSel := -1;
+         For Idx := 0 to (BtnNum - 1) do begin
+            aX := 10 + BtnWid*Idx + 10*Idx;
+            aY := 42;
+            
+            bX := aX + BtnWid;
+            bY := aY + 35;
+            
+            
+            If (mX >= aX) and (mX <= bX) and (mY >= aY) and (mY <= bY) then begin
+               If (SelType = SEL_BUILD)
+                  then OrderProduce(TCreatureType(Off+Idx))
+                  else OrderBuild(TBuildingType(Off+Idx));
+               Exit()
+            end
+         end
+      end;
+      
+      SelType := SEL_MAKING;
+      mSelX := Trunc(Camera.X + mX * CamScaleFactor);
+      mSelY := Trunc(Camera.Y + mY * CamScaleFactor);
+   end;
+
 Procedure ProcessEvents();
    begin
       While (SDL_PollEvent(@Ev) > 0) do
@@ -162,12 +271,7 @@ Procedure ProcessEvents();
                mY := Ev.Button.Y;
                
                Case (Ev.Button.Button) of
-                  SDL_BUTTON_LEFT: begin
-                     SelType := SEL_MAKING;
-                     mSelX := Trunc(Camera.X + mX * CamScaleFactor);
-                     mSelY := Trunc(Camera.Y + mY * CamScaleFactor);
-                  end;
-                  
+                  SDL_BUTTON_LEFT: MakeLeftClick();
                   SDL_BUTTON_RIGHT: IssueOrder();
                   
                   SDL_BUTTON_WHEELDOWN: CameraZoom(-1, ZOOM_MOUSE);

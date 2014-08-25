@@ -90,6 +90,7 @@ Procedure FinishProduction(Const Build:PBuilding);
 Type TCostArray = Array[TResourceType] of Double;
 
 Function EnoughResources(Const Cost:TCostArray):Boolean;
+Procedure RemoveResources(Const Cost:TCostArray);
 
 Function CDist(Const aC,bC:Double):Double;
 
@@ -143,7 +144,7 @@ Procedure CalcPlanetZones();
       ptAngle := GetAngle(+ptSin, ptCos);
       ptA.X := Planet[0].X + Cos(ptAngle + ctrAngle) * Planet[0].R;
       ptA.Y := Planet[0].Y + Sin(ptAngle + ctrAngle) * Planet[0].R;
-      Writeln('ptA: ',PtA.X:8:3,':',PtA.Y:8:3,'; angle: ',Trunc(ptAngle*180/Pi));
+      //Writeln('ptA: ',PtA.X:8:3,':',PtA.Y:8:3,'; angle: ',Trunc(ptAngle*180/Pi));
       
       Planet[0].Cmin := 0;
       Planet[0].Cmax := (2*(Pi - ptAngle)) * Planet[0].R;
@@ -155,7 +156,7 @@ Procedure CalcPlanetZones();
       ptAngle := -ptAngle;
       ptB.X := Planet[0].X + Cos(ptAngle + ctrAngle) * Planet[0].R;
       ptB.Y := Planet[0].Y + Sin(ptAngle + ctrAngle) * Planet[0].R;
-      Writeln('ptB: ',PtB.X:8:3,':',PtB.Y:8:3,'; angle: ',Trunc(ptAngle*180/Pi));
+      //Writeln('ptB: ',PtB.X:8:3,':',PtB.Y:8:3,'; angle: ',Trunc(ptAngle*180/Pi));
       
       ptCos := ctrD[1] / Planet[1].R;
       ptSin := Sqrt(1 - Sqr(ptCos));
@@ -167,8 +168,8 @@ Procedure CalcPlanetZones();
       Planet[1].Circu := 2 * Pi * Planet[1].R;
       Planet[1].AngDelta := GetAngle(Planet[1].X,Planet[1].Y,ptB.X,ptB.Y);
       
-      Writeln('Planet[0]: ',Trunc(Planet[0].Cmin):5,' - ',Trunc(Planet[0].Cmax):5,'; delta: ',Trunc(Planet[0].AngDelta*180/Pi));
-      Writeln('Planet[1]: ',Trunc(Planet[1].Cmin):5,' - ',Trunc(Planet[1].Cmax):5,'; delta: ',Trunc(Planet[1].AngDelta*180/Pi));
+      //Writeln('Planet[0]: ',Trunc(Planet[0].Cmin):5,' - ',Trunc(Planet[0].Cmax):5,'; delta: ',Trunc(Planet[0].AngDelta*180/Pi));
+      //Writeln('Planet[1]: ',Trunc(Planet[1].Cmin):5,' - ',Trunc(Planet[1].Cmax):5,'; delta: ',Trunc(Planet[1].AngDelta*180/Pi));
    end;
 
 Procedure CH_to_XYA(Const C,H:Double;Const Point:PPoint;Const Angle:PDouble);
@@ -347,6 +348,16 @@ Function EnoughResources(Const Cost:TCostArray):Boolean;
          If (PlayerResources[PlayerTeam][rt] < Cost[rt])
             then Exit(False);
       Exit(True)
+   end;
+
+
+Procedure RemoveResources(Const Cost:TCostArray);
+   Var rt : TResourceType;
+   begin
+      For rt := Low(TResourceType) to High(TResourceType) do
+         If (PlayerResources[PlayerTeam][rt] < Cost[rt])
+            then PlayerResources[PlayerTeam][rt] := 0
+            else PlayerResources[PlayerTeam][rt] -= Cost[rt]
    end;
 
 
