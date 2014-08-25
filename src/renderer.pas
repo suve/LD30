@@ -19,22 +19,6 @@ implementation
 Procedure DrawPlanets();
    Var Pl, sz, Points, Pt : sInt; nowC, Diff, Angle : Double;
    begin
-      (*
-      For Pl := 0 to 1 do begin
-         Points := Trunc(Planet[Pl].Circu / PLANET_GRANULARITY);
-         
-         glBegin(GL_LINE_LOOP);
-            glColor4ub(255,255,255,255);
-            For Pt := 0 to (Points-1) do begin
-               Angle := 2 * Pi * Pt / Points;
-               glVertex2f(
-                  Planet[Pl].X + Cos(Angle)*Planet[Pl].R,
-                  Planet[Pl].Y + Sin(Angle)*Planet[Pl].R
-               );
-            end;
-         glEnd()
-      end
-      *)
       For sz := 0 to (SightZoneNum - 1) do begin
          Diff := SightZone[sz].Cmax - SightZone[sz].Cmin;
          Points := Trunc(Diff / PLANET_GRANULARITY);

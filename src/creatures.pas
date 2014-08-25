@@ -48,7 +48,11 @@ Type
 
 Var
    Creature : Array of PCreature;
-   CreatureNum, CreatureLen : uInt;
+   CreatureNum, CreatureLen : sInt;
+
+
+Procedure DamageCreature(Const Idx:sInt;Const Dmg:Double);
+
 
 implementation
    uses Globals, Resources, Buildings;
@@ -157,5 +161,20 @@ Procedure TCreature.Calculate();
          
       end
    end;
+
+
+Procedure DamageCreature(Const Idx:sInt;Const Dmg:Double);
+   begin
+      If (Idx < 0) or (Idx >= CreatureLen) then Exit();
+      If (Creature[Idx] = NIL) then Exit();
+      
+      Creature[Idx]^.HP -= Dmg;
+      If (Creature[Idx]^.HP <= 0) then begin
+         Dispose(Creature[Idx],Destroy());
+         Creature[Idx] := NIL;
+         CreatureNum -= 1;
+      end
+   end;
+
 
 end.

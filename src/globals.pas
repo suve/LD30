@@ -11,8 +11,8 @@ interface
 Const
    GAME_NAME = 'TechnoTumor';
    GAME_VMAJOR = 0;
-   GAME_VMINOR = 3;
-   GAME_VBUGFX = 1;
+   GAME_VMINOR = 4;
+   GAME_VBUGFX = 0;
    GAME_VERSION = Chr(48+GAME_VMAJOR) + '.' + Chr(48+GAME_VMINOR) + '.' + Chr(48+GAME_VBUGFX);
 
    SDL_TICKS_PER_SECOND = 1000;

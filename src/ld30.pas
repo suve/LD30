@@ -5,10 +5,10 @@ program ld30;
 
 uses
    SysUtils,
-   SDL, SDL_Image, SDL_Mixer,
+   SDL, SDL_Image, //SDL_Mixer,
    Sour, GL,
    Globals, Enums,
-   Resources,
+   Resources, Bullets,
    Buildings, Creatures,
    Renderer, CameraUnit;
 
@@ -209,6 +209,41 @@ Procedure CalculateCreatures();
          
          Creature[C]^.Calculate()
       end;
+   end;
+
+
+Procedure CalculateBullets();
+   Var B,C,i:sInt; RemBul : Boolean;
+   begin
+      If (BulletLen = 0) then Exit();
+      For i:=0 to (BulletLen - 1) do
+         If (Bullet[i] <> NIL) then begin
+            Bullet[i]^.X += Bullet[i]^.XVel * dT;
+            Bullet[i]^.Y += Bullet[i]^.YVel * dT;
+            
+            For C:=0 to (CreatureLen - 1) do
+               If (Creature[C] <> NIL) and (Creature[C]^.Team <> Bullet[i]^.Team) then
+                  If (EntityInBox(Creature[C],30,42,Bullet[i]^.X-2.5,Bullet[i]^.Y-2.5,5,5)) then begin
+                     DamageCreature(C, Bullet[i]^.Pow);
+                     RemBul := True;
+                     Break
+                  end;
+            
+            If(Not RemBul) then
+            For B:=0 to (BuildingLen - 1) do
+               If (Building[B] <> NIL) and (Building[B]^.Team <> Bullet[i]^.Team) then
+                  If (EntityInBox(Building[B],90,63,Bullet[i]^.X-2.5,Bullet[i]^.Y-2.5,5,5)) then begin
+                     DamageBuilding(B, Bullet[i]^.Pow);
+                     RemBul := True;
+                     Break
+                  end;
+            
+            If(RemBul) then begin
+               Dispose(Bullet[i]);
+               Bullet[i] := NIL;
+               BulletNum -= 1
+            end
+         end;
    end;
 
 

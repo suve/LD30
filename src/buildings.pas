@@ -47,10 +47,11 @@ Type
 
 Var
    Building : Array of PBuilding;
-   BuildingNum, BuildingLen : uInt;
+   BuildingNum, BuildingLen : sInt;
 
 
 Function NearestCollector(Const ncC:Double;Const Team:sInt):sInt;
+Procedure DamageBuilding(Const Idx:sInt;Const Dmg:Double);
 
 
 implementation
@@ -97,5 +98,18 @@ Function NearestCollector(Const ncC:Double;Const Team:sInt):sInt;
       Exit(nID)
    end;
 
+
+Procedure DamageBuilding(Const Idx:sInt;Const Dmg:Double);
+   begin
+      If (Idx < 0) or (Idx >= BuildingLen) then Exit();
+      If (Building[Idx] = NIL) then Exit();
+      
+      Building[Idx]^.HP -= Dmg;
+      If (Building[Idx]^.HP <= 0) then begin
+         Dispose(Building[Idx],Destroy());
+         Building[Idx] := NIL;
+         BuildingNum -= 1;
+      end
+   end;
 
 end.
