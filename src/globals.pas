@@ -23,11 +23,6 @@ Const
    SEL_MAX = 30;
 
 Type
-   PPoint = ^TPoint;
-   TPoint = record
-      X, Y : Double
-   end;
-   
    PSightZone = ^TSightZone;
    TSightZone = record
       cMin, cMax : Double
@@ -65,9 +60,6 @@ Var
    
    mX, mY : sInt;
    mSelX, mSelY : sInt;
-   
-   Camera : TPoint = (X:0.0; Y:0.0);
-   CamMove : Array[TDir] of Boolean = (False,False,False,False);
 
    CamScale : sInt = 10;
    CamScaleFactor : Double = 1;
@@ -94,6 +86,10 @@ Function CH_to_XY(Const C,H:Double):TPoint;
 Function EntityInBox(Const en:PEntity;Const eW,eH,aX,aY,bX,bY:Double):Boolean;
 
 Procedure FinishProduction(Const Build:PBuilding);
+
+Type TCostArray = Array[TResourceType] of Double;
+
+Function EnoughResources(Const Cost:TCostArray):Boolean;
 
 Function CDist(Const aC,bC:Double):Double;
 
@@ -341,6 +337,16 @@ Function EntityInBox(Const en:PEntity;Const eW,eH,aX,aY,bX,bY:Double):Boolean;
       If (eYb < aY) then Exit(False);
       
       Result := True
+   end;
+
+
+Function EnoughResources(Const Cost:TCostArray):Boolean;
+   Var rt : TResourceType;
+   begin
+      For rt := Low(TResourceType) to High(TResourceType) do
+         If (PlayerResources[PlayerTeam][rt] < Cost[rt])
+            then Exit(False);
+      Exit(True)
    end;
 
 

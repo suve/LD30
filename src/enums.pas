@@ -55,6 +55,11 @@ Type
    
    TMouseAction = (MOAC_SELECT, MOAC_PLACE, MOAC_TARGET);
    
+   PPoint = ^TPoint;
+   TPoint = record
+      X, Y : Double
+   end;
+   
 Const
    DIR_RI = DIR_RIGHT;
    DIR_DO = DIR_DOWN;

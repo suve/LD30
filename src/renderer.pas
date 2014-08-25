@@ -12,7 +12,8 @@ implementation
       SysUtils,
       SDL, Sour, GL,
       Globals, Enums,
-      Resources, Buildings, Creatures;
+      Resources, Buildings, Creatures,
+      CameraUnit;
 
 
 Procedure DrawPlanets();
@@ -294,7 +295,7 @@ Procedure DrawUI_Windows(Const UIType:TUIType;Const UI_Space:uInt);
       Crd.X -= UI_GAP + UIGfx[UIType][UIS_METAL]^.W;
       Sour.DrawImage(UIGfx[UIType][UIS_METAL],NIL,@Crd);
       Sour.PrintText(
-         IntToStr(Trunc(PlayerResources[0][RSRC_METAL])),
+         IntToStr(Trunc(PlayerResources[PlayerTeam][RSRC_METAL])),
          FontA,
          Crd.X + UIGfx[UIType][UIS_METAL]^.W - UI_Space,
          Crd.Y + 6,
@@ -304,7 +305,7 @@ Procedure DrawUI_Windows(Const UIType:TUIType;Const UI_Space:uInt);
       Crd.X -= UI_GAP + UIGfx[UIType][UIS_TIMBER]^.W;
       Sour.DrawImage(UIGfx[UIType][UIS_TIMBER],NIL,@Crd);
       Sour.PrintText(
-         IntToStr(Trunc(PlayerResources[0][RSRC_TIMBER])),
+         IntToStr(Trunc(PlayerResources[PlayerTeam][RSRC_TIMBER])),
          FontA,
          Crd.X + UIGfx[UIType][UIS_TIMBER]^.W - UI_Space,
          Crd.Y + 6,
@@ -314,7 +315,7 @@ Procedure DrawUI_Windows(Const UIType:TUIType;Const UI_Space:uInt);
       Crd.X -= UI_GAP + UIGfx[UIType][UIS_CRYSTALS]^.W;
       Sour.DrawImage(UIGfx[UIType][UIS_CRYSTALS],NIL,@Crd);
       Sour.PrintText(
-         IntToStr(Trunc(PlayerResources[0][RSRC_CRYSTAL])),
+         IntToStr(Trunc(PlayerResources[PlayerTeam][RSRC_CRYSTAL])),
          FontA,
          Crd.X + UIGfx[UIType][UIS_CRYSTALS]^.W - UI_Space,
          Crd.Y + 6,
@@ -456,9 +457,7 @@ Procedure DrawUI_Production(Const UIType:TUIType;Const UI_Space:uInt);
          Sour.TexEnable(); Sour.TexBind(UIGfx[UIType][UIS_SEL_L]^.Tex);
          butp := btMin; Rekt.X := 10; Rekt.Y := 60;
          While (butp < btMax) do begin
-            If (BuildingStats[butp].Cost[RSRC_CRYSTAL] <= PlayerResources[PlayerTeam][RSRC_CRYSTAL]) and
-            {} (BuildingStats[butp].Cost[RSRC_TIMBER] <= PlayerResources[PlayerTeam][RSRC_TIMBER]) and
-            {} (BuildingStats[butp].Cost[RSRC_METAL] <= PlayerResources[PlayerTeam][RSRC_METAL])
+            If (EnoughResources(BuildingStats[butp].Cost))
                then Col := @Green
                else Col := @Red;
             
@@ -510,9 +509,7 @@ Procedure DrawUI_Production(Const UIType:TUIType;Const UI_Space:uInt);
          Sour.TexEnable(); Sour.TexBind(UIGfx[UIType][UIS_SEL_L]^.Tex);
          crtp := ctMin; Rekt.X := 10; Rekt.Y := 60;
          While (crtp < ctMax) do begin
-            If (CreatureStats[crtp].Cost[RSRC_CRYSTAL] <= PlayerResources[PlayerTeam][RSRC_CRYSTAL]) and
-            {} (CreatureStats[crtp].Cost[RSRC_TIMBER] <= PlayerResources[PlayerTeam][RSRC_TIMBER]) and
-            {} (CreatureStats[crtp].Cost[RSRC_METAL] <= PlayerResources[PlayerTeam][RSRC_METAL])
+            If (EnoughResources(CreatureStats[crtp].Cost))
                then Col := @Green
                else Col := @Red;
             
