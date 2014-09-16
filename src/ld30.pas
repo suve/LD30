@@ -12,10 +12,14 @@ uses
    Buildings, Creatures,
    Renderer, CameraUnit;
 
+const
+   MAX_FPS = 100;
+   MIN_TICKS = 1000 div MAX_FPS;
+
 Procedure AdvanceTime();
    begin
       Time := SDL_GetTicks() - Ticks;
-      If (Time = 0) then begin
+      While (Time < MIN_TICKS) do begin
          SDL_Delay(1);
          Time := SDL_GetTicks() - Ticks
       end;
@@ -94,7 +98,7 @@ Procedure IssueOrder();
          
          Res := ResourceAvailable(cC,75);
          
-         Writeln('Planet ',pl,' cC: ',Trunc(cC),' (',Trunc(Planet[pl].Cmin),' - ',Trunc(Planet[pl].Cmax),'); Res: ',Res);
+         // Writeln('Planet ',pl,' cC: ',Trunc(cC),' (',Trunc(Planet[pl].Cmin),' - ',Trunc(Planet[pl].Cmax),'); Res: ',Res);
          
          If (cC >= Planet[pl].Cmin) and (cC <= Planet[pl].Cmax) then begin
             If (SelType = SEL_CREAT) then

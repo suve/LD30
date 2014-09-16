@@ -271,40 +271,25 @@ Procedure DrawRay();
 
 Procedure DrawUI_Windows(Const UIType:TUIType;Const UI_Space:uInt);
    Const UI_GAP = 10;
-   Var Crd:Sour.TCrd;
+   Var Crd:Sour.TCrd; RT:TResourceType; UIS:TUISprite;
    begin
       Crd.X := Screen^.W - 1;
       Crd.Y := UI_GAP;
       
-      Crd.X -= UI_GAP + UIGfx[UIType][UIS_METAL]^.W;
-      Sour.DrawImage(UIGfx[UIType][UIS_METAL],NIL,@Crd);
-      Sour.PrintText(
-         IntToStr(Trunc(PlayerResources[PlayerTeam][RSRC_METAL])),
-         FontA,
-         Crd.X + UIGfx[UIType][UIS_METAL]^.W - UI_Space,
-         Crd.Y + 6,
-         ALIGN_RIGHT
-         );
-      
-      Crd.X -= UI_GAP + UIGfx[UIType][UIS_TIMBER]^.W;
-      Sour.DrawImage(UIGfx[UIType][UIS_TIMBER],NIL,@Crd);
-      Sour.PrintText(
-         IntToStr(Trunc(PlayerResources[PlayerTeam][RSRC_TIMBER])),
-         FontA,
-         Crd.X + UIGfx[UIType][UIS_TIMBER]^.W - UI_Space,
-         Crd.Y + 6,
-         ALIGN_RIGHT
-         );
-      
-      Crd.X -= UI_GAP + UIGfx[UIType][UIS_CRYSTALS]^.W;
-      Sour.DrawImage(UIGfx[UIType][UIS_CRYSTALS],NIL,@Crd);
-      Sour.PrintText(
-         IntToStr(Trunc(PlayerResources[PlayerTeam][RSRC_CRYSTAL])),
-         FontA,
-         Crd.X + UIGfx[UIType][UIS_CRYSTALS]^.W - UI_Space,
-         Crd.Y + 6,
-         ALIGN_RIGHT
-         );
+      For RT := RSRC_METAL downto RSRC_CRYSTAL do begin
+         
+         UIS := TUISprite(Ord(UIS_CRYSTALS) + Ord(RT) - Ord(RSRC_CRYSTAL));
+         
+         Crd.X -= UI_GAP + UIGfx[UIType][UIS]^.W;
+         Sour.DrawImage(UIGfx[UIType][UIS],NIL,@Crd);
+         Sour.PrintText(
+            IntToStr(Trunc(PlayerResources[PlayerTeam][RT])),
+            FontA,
+            Crd.X + UIGfx[UIType][UIS]^.W - UI_Space,
+            Crd.Y + 6,
+            ALIGN_RIGHT
+            )
+      end
    end;
 
 
@@ -424,6 +409,7 @@ Procedure DrawUI_Production(Const UIType:TUIType;Const UI_Space:uInt);
       ctMin, ctMax, crtp : TCreatureType;
       btMin, btMax, butp : TBuildingType;
       DrawCost : Boolean; Costs : Array[TResourceType] of Double;
+      RT:TResourceType; UIS:TUISprite;
    begin
       If (SelType < SEL_CREAT) or (Not SelWorkers) then Exit();
       DrawCost := False; 
@@ -537,45 +523,24 @@ Procedure DrawUI_Production(Const UIType:TUIType;Const UI_Space:uInt);
          Rekt.X := Screen^.W - 1;
          Rekt.Y := 42;
          
-         If(PlayerResources[PlayerTeam][RSRC_METAL] >= Costs[RSRC_METAL])
-            then Col := @Green else Col := @Red;
-         
-         Rekt.X -= 10 + UIGfx[UIType][UIS_METAL]^.W;
-         Sour.DrawImage(UIGfx[UIType][UIS_METAL],NIL,@Rekt,Col);
-         Sour.PrintText(
-            IntToStr(Trunc(Costs[RSRC_METAL])),
-            FontA,
-            Rekt.X + UIGfx[UIType][UIS_METAL]^.W - (UI_Space + 1),
-            Rekt.Y + 6,
-            ALIGN_RIGHT
-            );
-         
-         If(PlayerResources[PlayerTeam][RSRC_METAL] >= Costs[RSRC_METAL])
-            then Col := @Green else Col := @Red;
-         
-         Rekt.X -= 10 + UIGfx[UIType][UIS_TIMBER]^.W;
-         Sour.DrawImage(UIGfx[UIType][UIS_TIMBER],NIL,@Rekt,Col);
-         Sour.PrintText(
-            IntToStr(Trunc(Costs[RSRC_TIMBER])),
-            FontA,
-            Rekt.X + UIGfx[UIType][UIS_TIMBER]^.W - (UI_Space + 1),
-            Rekt.Y + 6,
-            ALIGN_RIGHT
-            );
-         
-         If(PlayerResources[PlayerTeam][RSRC_METAL] >= Costs[RSRC_METAL])
-            then Col := @Green else Col := @Red;
-         
-         Rekt.X -= 10 + UIGfx[UIType][UIS_CRYSTALS]^.W;
-         Sour.DrawImage(UIGfx[UIType][UIS_CRYSTALS],NIL,@Rekt,Col);
-         Sour.PrintText(
-            IntToStr(Trunc(Costs[RSRC_CRYSTAL])),
-            FontA,
-            Rekt.X + UIGfx[UIType][UIS_CRYSTALS]^.W - (UI_Space + 1),
-            Rekt.Y + 6,
-            ALIGN_RIGHT
-            );
-      end;
+         For RT := RSRC_METAL downto RSRC_CRYSTAL do begin
+
+            UIS := TUISprite(Ord(UIS_CRYSTALS) + Ord(RT) - Ord(RSRC_CRYSTAL));
+            
+            If(PlayerResources[PlayerTeam][RT] >= Costs[RT])
+               then Col := @Green else Col := @Red;
+            
+            Rekt.X -= 10 + UIGfx[UIType][UIS]^.W;
+            Sour.DrawImage(UIGfx[UIType][UIS],NIL,@Rekt,Col);
+            Sour.PrintText(
+               IntToStr(Trunc(Costs[RT])),
+               FontA,
+               Rekt.X + UIGfx[UIType][UIS]^.W - (UI_Space + 1),
+               Rekt.Y + 6,
+               ALIGN_RIGHT
+               )
+         end
+      end
    end;
 
 
